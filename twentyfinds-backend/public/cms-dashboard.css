@@ -1,0 +1,119 @@
+body {
+    --paper: #fcf8f2;
+    --ink: #241a18;
+    --wine: #792f40;
+    --line: #e6d9cd;
+    --mute: #65504a;
+}
+.admin-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100dvh; }
+.admin-sidebar {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow: auto;
+    padding: 22px 16px;
+    background: #411a23;
+    color: #fff4e9;
+}
+.admin-brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; font-weight: 800; letter-spacing: .045em; padding: 0 7px 26px; }
+.admin-brand small, .account-name small { display: block; color: #e7bdb0; font-weight: 500; letter-spacing: 0; }
+.brand-emblem, .account-avatar {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 38px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #ecd0c9;
+    color: #541d2a;
+    font: 700 18px Georgia, serif;
+}
+.admin-sidebar nav { display: grid; gap: 4px; }
+.admin-sidebar nav a { color: #f8ebe2; text-decoration: none; padding: 10px 13px; border-radius: 8px; }
+.admin-sidebar nav a:hover, .admin-sidebar nav a[aria-current] { background: #6c2939; color: #fff; }
+.nav-group { color: #e7bdb0; font-size: 11px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; padding: 18px 13px 3px; }
+.sidebar-account { margin-top: auto; padding: 18px 4px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.account-avatar { width: 32px; font: 650 14px system-ui; }
+.account-name { overflow-wrap: anywhere; min-width: 0; flex: 1; font-size: 13px; font-weight: 650; }
+.sidebar-account form { width: 100%; }
+.sidebar-signout { width: 100%; background: transparent; border-color: #a26772; color: #fff4e9; font-size: 13px; }
+.admin-workspace { min-width: 0; }
+.admin-topbar { background: #fffdf9; border-bottom: 1px solid var(--line); padding: 14px clamp(18px, 3vw, 38px); }
+.topbar-start, .breadcrumbs { display: flex; align-items: center; gap: 12px; }
+.breadcrumbs { font-size: 13px; color: var(--mute); }
+.breadcrumbs a { text-decoration: none; }
+.sidebar-toggle { background: #fff; color: var(--ink); border-color: var(--line); min-height: 34px; font-size: 13px; }
+.owner-shell main { width: min(1400px, calc(100% - clamp(36px, 6vw, 76px))); padding: clamp(22px, 4vw, 42px) 0; }
+.owner-shell h1 { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.055em; font-size: clamp(30px, 4vw, 47px); }
+.owner-shell h2 { font: 400 24px/1.25 Georgia, serif; letter-spacing: -.025em; }
+.owner-shell .panel { border-radius: 10px; background: #fffdf9; box-shadow: 0 2px 7px #411a230c; }
+.owner-shell .button, .owner-shell button { border-radius: 8px; gap: 7px; }
+.dashboard-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+.dashboard-heading .muted { margin-bottom: 0; }
+.dashboard-label { margin: 0 0 5px; color: var(--wine); font-size: 13px; font-weight: 700; }
+.dashboard-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.metric { display: grid; gap: 7px; min-width: 0; text-decoration: none; color: var(--ink); }
+.metric:hover { border-color: #a54c5d; }
+.metric-heading { display: flex; justify-content: space-between; gap: 5px; font-size: 14px; font-weight: 650; }
+.metric-heading span { color: var(--wine); }
+.metric strong { font-size: clamp(26px, 3.6vw, 39px); line-height: 1.1; }
+.dashboard-panels { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 16px; margin-top: 18px; }
+.dashboard-empty { border: 1px dashed #d9b9ae; border-radius: 10px; padding: 23px; background: #f8efe7; }
+.dashboard-empty p { color: var(--mute); margin: 5px 0 12px; }
+.updates-table { font-size: 13px; }
+.updates-table td small { display: block; }
+.updates-table td a { font-weight: 650; text-decoration: none; }
+.owner-shell .pill { background: #f3e5da; color: #672536; white-space: nowrap; }
+.owner-shell .pill-live { background: #e4f2e8; color: #235437; }
+.quick-panel > a { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 0; text-decoration: none; border-top: 1px solid var(--line); }
+.quick-panel > a strong { color: var(--ink); font-size: 14px; }
+.quick-panel > a:hover strong { color: var(--wine); }
+.quick-panel > a small { display: block; }
+@media (min-width: 801px) {
+    .admin-shell.sidebar-collapsed { grid-template-columns: minmax(0, 1fr); }
+    .sidebar-collapsed .admin-sidebar { display: none; }
+}
+@media (max-width: 1050px) {
+    .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 800px) {
+    .admin-shell { grid-template-columns: minmax(0, 1fr); }
+    .admin-sidebar { position: static; height: auto; }
+    .admin-shell:not(.sidebar-open) .admin-sidebar { display: none; }
+    .dashboard-panels { grid-template-columns: minmax(0, 1fr); }
+}
+
+.login {
+    margin-block: clamp(12px, 9vh, 88px);
+    border-top: 4px solid var(--wine);
+    box-shadow: 0 12px 45px #411a2310;
+}
+.login-brand {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    color: var(--ink);
+    font-weight: 750;
+    letter-spacing: .04em;
+}
+.login-brand .brand-emblem { width: 32px; background: var(--wine); color: #fff4e9; }
+.owner-shell button:hover, .login button:hover { filter: brightness(.94); }
+
+.owner-shell .pages-panel { padding: 0; }
+.pages-table-heading { padding: 20px clamp(14px, 2vw, 24px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+.pages-table-heading h2 { margin-bottom: 4px; }
+.pages-table-heading p { margin: 0; }
+.pages-table { min-width: 700px; }
+.pages-table thead { background: #f3e5da; color: #541d2a; }
+.pages-table th { font-size: 12px; letter-spacing: .045em; text-transform: uppercase; }
+.pages-table th, .pages-table td { padding: 13px clamp(12px, 1.7vw, 22px); }
+.pages-table td small { display: block; }
+.pages-table tbody tr:hover { background: #fcf8f2; }
+.page-row-title { color: var(--ink); font-weight: 700; }
+.page-row-actions { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.pages-pagination { padding: 0 20px 16px; }
+.contact-inbox-message { white-space: pre-wrap; overflow-wrap: anywhere; }
