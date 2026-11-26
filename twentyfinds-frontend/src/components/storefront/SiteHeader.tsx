@@ -1,38 +1,57 @@
 "use client";
+import { storefrontBrand } from "@/features/storefront/brand";
 import { StorefrontText, useStorefrontCopy } from "@/features/storefront/StorefrontCopy";
 
 import type { CmsPage } from "@/features/storefront/cms";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useStorefront } from "@/features/storefront/StorefrontProvider";
 import { Icon } from "./Icon";
+import { BrandLogo } from "./BrandLogo";
+import { ShoppingPanel, type ShoppingPanelProduct } from "./ShoppingPanel";
+import { departmentGroups, informationLinks, moreLinks, newIn, shopAll } from "@/features/storefront/navigation";
 
 type HeaderProps = {
   announcement?: CmsPage;
   categories: { name: string; slug: string }[];
+  shoppingProducts: ShoppingPanelProduct[];
 };
 
-export function SiteHeader({ announcement, categories }: HeaderProps) {
+export function SiteHeader({ announcement, categories, shoppingProducts }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const copy = useStorefrontCopy();
   const { cartCount, wishlistCount } = useStorefront();
   const drawer = useRef<HTMLDialogElement>(null);
+  const desktopMenu = useRef<HTMLDetailsElement>(null);
+  const actionTrigger = useRef<HTMLButtonElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [panel, setPanel] = useState<"wishlist" | "bag" | null>(
+  const [panel, setPanel] = useState<"account" | "wishlist" | "bag" | null>(
     null,
   );
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 1051px)");
-    const closeAtDesktop = () => {
+    const closeAtBreakpoint = () => {
       if (desktop.matches) drawer.current?.close();
+      else if (desktopMenu.current) desktopMenu.current.open = false;
     };
-    desktop.addEventListener("change", closeAtDesktop);
-    return () => desktop.removeEventListener("change", closeAtDesktop);
+    function closeOnOutsideClick(event: PointerEvent) {
+      const menu = desktopMenu.current;
+      if (menu?.open && event.target instanceof Node && !menu.contains(event.target)) {
+        menu.open = false;
+      }
+    }
+    desktop.addEventListener("change", closeAtBreakpoint);
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => {
+      desktop.removeEventListener("change", closeAtBreakpoint);
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+    };
   }, []);
 
   function openMobileMenu() {
@@ -46,9 +65,8 @@ export function SiteHeader({ announcement, categories }: HeaderProps) {
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const query = search.trim();
-    window.location.href = query
-      ? `/shop?q=${encodeURIComponent(query)}`
-      : "/shop";
+    closeMenus();
+    router.push(query ? `/shop?q=${encodeURIComponent(query)}` : "/shop");
   }
 
   function closeMenus() {
@@ -57,78 +75,87 @@ export function SiteHeader({ announcement, categories }: HeaderProps) {
     drawer.current?.close();
   }
 
-  const productsSection = pathname === "/shop" || pathname?.startsWith("/products/");
-  const categorySection = pathname?.startsWith("/categories/");
+  function dismissAction() {
+    closeMenus();
+    actionTrigger.current?.focus();
+  }
 
-  function renderNavigation(withArrow = false) {
-    const arrow = withArrow && <span aria-hidden="true"><Icon name="arrow-right" size={20} /></span>;
+  const categorySlugs = new Set(categories.map(({ slug }) => slug));
+  const featuredSlugs = new Set(departmentGroups.flatMap(({ items }) =>
+    items.map(({ slugs }) => slugs?.find((slug) => categorySlugs.has(slug))),
+  ));
+  const otherCategories = categories.filter(({ slug }) => !featuredSlugs.has(slug));
+
+  function renderNavigation(inDrawer = false) {
+    const arrow = inDrawer && <Icon name="arrow-right" size={20} />;
+
+    function navigationLink({ id, label, href }: { id: string; label: string; href: string }, icon = false) {
+      return (
+        <Link key={id} href={href} aria-current={pathname === href && href !== "/shop" ? "page" : undefined}
+          onClick={(event) => {
+            const menu = event.currentTarget.closest("details");
+            if (menu) menu.open = false;
+            closeMenus();
+          }}>
+          <StorefrontText id={`header.${id}`} fallback={label} />{icon && arrow}
+        </Link>
+      );
+    }
 
     return (
       <>
-        <Link href="/" onClick={closeMenus} aria-current={pathname === "/" ? "page" : undefined}>
-          <StorefrontText id="header.home" fallback="Home" />{arrow}
-        </Link>
-        <Link href="/shop" onClick={closeMenus} aria-current={pathname === "/shop" ? "page" : undefined}
-          className={productsSection ? "nav-section-active" : undefined}>
-          <StorefrontText id="header.products" fallback="Products" />{arrow}
-        </Link>
-        {categories.length > 0 ? (
-          <details
-            className="header-category-menu"
-            onBlur={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== "Escape" || !event.currentTarget.open) return;
-              event.preventDefault();
+        {navigationLink(newIn, true)}
+        <details className="header-category-menu" ref={inDrawer ? undefined : desktopMenu}
+          onBlur={(event) => {
+            if (!inDrawer && event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
               event.currentTarget.open = false;
-              event.currentTarget.querySelector("summary")?.focus();
-            }}
-          >
-            <summary className={categorySection ? "nav-section-active" : undefined}>
-              <StorefrontText id="header.categories" fallback="Categories" />
-              <Icon name="chevron-down" size={15} />
-            </summary>
-            <div className="header-category-links">
-              {categories.map(({ name, slug }) => (
-                <Link key={slug} href={`/categories/${slug}`} onClick={(event) => {
-                  const menu = event.currentTarget.closest("details");
-                  if (menu) menu.open = false;
-                  closeMenus();
-                }}>
-                  {name}
-                </Link>
-              ))}
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape" || !event.currentTarget.open) return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.open = false;
+            event.currentTarget.querySelector("summary")?.focus();
+          }}>
+          <summary className={pathname?.startsWith("/categories/") ? "nav-section-active" : undefined}>
+            <StorefrontText id="header.categories" fallback="Shop by category" />
+            <Icon name="chevron-down" size={15} />
+          </summary>
+          <div className="header-category-links">
+            {departmentGroups.map(({ id, label, items }) => (
+              <div className="header-menu-group" key={id}>
+                <p><StorefrontText id={`header.menu-${id}`} fallback={label} /></p>
+                {items.map((item) => {
+                  const slug = item.slugs?.find((candidate) => categorySlugs.has(candidate));
+                  return navigationLink({ ...item, href: slug ? `/categories/${slug}` : item.href });
+                })}
+              </div>
+            ))}
+            <div className="header-menu-group">
+              <p><StorefrontText id="header.menu-more" fallback="More from 20ISH" /></p>
+              {otherCategories.map(({ name, slug }) => navigationLink({
+                id: `category-${slug}`, label: name, href: `/categories/${slug}`,
+              }))}
+              {moreLinks.map((item) => navigationLink(item))}
             </div>
-          </details>
-        ) : (
-          <Link href="/#shop-by-category" onClick={closeMenus}>
-            <StorefrontText id="header.categories" fallback="Categories" />{arrow}
-          </Link>
-        )}
-        <Link href="/shop?sort=new" onClick={closeMenus}>
-          <StorefrontText id="header.new-arrivals" fallback="New Arrivals" />{arrow}
-        </Link>
-        <Link href="/shop?sort=bestsellers" onClick={closeMenus}>
-          <StorefrontText id="header.best-sellers" fallback="Best Sellers" />{arrow}
-        </Link>
-        <Link href="/shop?deals=1" onClick={closeMenus}>
-          <StorefrontText id="header.offers" fallback="Offers" />{arrow}
-        </Link>
-        <Link href="/about" onClick={closeMenus} aria-current={pathname === "/about" ? "page" : undefined}>
-          <StorefrontText id="header.about" fallback="About" />{arrow}
-        </Link>
-        <Link href="/contact" onClick={closeMenus} aria-current={pathname === "/contact" ? "page" : undefined}>
-          <StorefrontText id="header.contact" fallback="Contact" />{arrow}
-        </Link>
+          </div>
+        </details>
+        {navigationLink(shopAll, true)}
+        {informationLinks.map((item) => navigationLink(item, true))}
       </>
     );
   }
 
   return (
-    <header className="site-header">
+    <header className="site-header" onKeyDown={(event) => {
+      if (event.key === "Escape" && (searchOpen || panel)) {
+        event.preventDefault();
+        dismissAction();
+      }
+    }}>
       <div className="announcement-bar">
-        <span>{announcement?.title ?? <StorefrontText id="header.the-twentyfinds-edit" fallback="THE TWENTYFINDS EDIT" />}</span>
+        <span>{announcement?.title ?? <StorefrontText id="header.the-twentyfinds-edit" fallback="THE 20ISH EDIT" />}</span>
         <span className="announcement-divider" aria-hidden="true">·</span>
         <span>{announcement?.content ?? <StorefrontText id="header.everyday-favourites-always-under-20" fallback="Everyday favourites, always under £20" />}</span>
       </div>
@@ -146,9 +173,8 @@ export function SiteHeader({ announcement, categories }: HeaderProps) {
           <Icon name={mobileOpen ? "close" : "menu"} />
         </button>
 
-        <Link href="/" className="brand-lockup" aria-label={copy("header.twentyfinds-home", "TWENTYFINDS home")}>
-          <span className="brand-mark">20</span>
-          <span className="brand-wordmark"><StorefrontText id="header.twentyfinds" fallback="TWENTYFINDS" /></span>
+        <Link href="/" className="brand-lockup" aria-label={copy("header.twentyfinds-home", `${storefrontBrand.name} home`)}>
+          <BrandLogo copyId="header.twentyfinds" />
         </Link>
 
         <nav className="primary-nav" aria-label={copy("header.main-navigation", "Main navigation")}>
@@ -173,7 +199,9 @@ export function SiteHeader({ announcement, categories }: HeaderProps) {
             className="icon-button header-action header-search-toggle"
             aria-label={searchOpen ? copy("header.close-search", "Close search") : copy("header.search", "Search")}
             aria-expanded={searchOpen}
-            onClick={() => {
+            aria-controls={searchOpen ? "storefront-search-panel" : undefined}
+            onClick={(event) => {
+              actionTrigger.current = event.currentTarget;
               setSearchOpen((open) => !open);
               setPanel(null);
             }}
@@ -183,9 +211,25 @@ export function SiteHeader({ announcement, categories }: HeaderProps) {
           <button
             type="button"
             className="icon-button header-action"
+            aria-label={copy("header.account", "Account")}
+            aria-expanded={panel === "account"}
+            aria-controls={panel === "account" ? "storefront-header-panel" : undefined}
+            onClick={(event) => {
+              actionTrigger.current = event.currentTarget;
+              setPanel(panel === "account" ? null : "account");
+              setSearchOpen(false);
+            }}
+          >
+            <Icon name="user" size={19} />
+          </button>
+          <button
+            type="button"
+            className="icon-button header-action"
             aria-label={copy("header.wishlist-wishlistcount-saved", "Wishlist, {wishlistCount} saved", { wishlistCount: wishlistCount })}
             aria-expanded={panel === "wishlist"}
-            onClick={() => {
+            aria-controls={panel === "wishlist" ? "storefront-header-panel" : undefined}
+            onClick={(event) => {
+              actionTrigger.current = event.currentTarget;
               setPanel(panel === "wishlist" ? null : "wishlist");
               setSearchOpen(false);
             }}
@@ -193,7 +237,7 @@ export function SiteHeader({ announcement, categories }: HeaderProps) {
             <span className="header-icon-wrap">
               <Icon name="heart" size={19} />
               {wishlistCount > 0 && (
-                <span className="count-dot">{wishlistCount}</span>
+                <span className="count-dot" aria-hidden="true">{wishlistCount}</span>
               )}
             </span>
           </button>
@@ -202,61 +246,52 @@ export function SiteHeader({ announcement, categories }: HeaderProps) {
             className="icon-button header-action"
             aria-label={copy("header.shopping-cart-cartcount-items", "Shopping cart, {cartCount} items", { cartCount: cartCount })}
             aria-expanded={panel === "bag"}
-            onClick={() => {
+            aria-controls={panel === "bag" ? "storefront-header-panel" : undefined}
+            onClick={(event) => {
+              actionTrigger.current = event.currentTarget;
               setPanel(panel === "bag" ? null : "bag");
               setSearchOpen(false);
             }}
           >
             <span className="header-icon-wrap">
               <Icon name="bag" size={19} />
-              {cartCount > 0 && <span className="count-dot">{cartCount}</span>}
+              {cartCount > 0 && <span className="count-dot" aria-hidden="true">{cartCount}</span>}
             </span>
           </button>
         </div>
 
         {panel && (
-          <div className="header-popover">
+          <div className={panel === "account" ? "header-popover" : "header-popover shopping-panel"}
+            id="storefront-header-panel" aria-live={panel === "account" ? "polite" : undefined}>
             <button
               type="button"
               className="popover-close"
               aria-label={copy("header.close-popover", "Close popover")}
-              onClick={() => setPanel(null)}
+              onClick={dismissAction}
+              autoFocus
             >
               <Icon name="close" size={17} />
             </button>
-            {panel === "wishlist" && (
+            {panel === "account" && (
               <>
-                <span className="popover-kicker"><StorefrontText id="header.your-wishlist" fallback="Your wishlist" /></span>
-                <strong>
-                  {wishlistCount === 0
-                    ? <StorefrontText id="header.a-little-list-of-lovely-things" fallback="A little list of lovely things." />
-                    : <StorefrontText id="header.wishlistcount-find-value-saved" fallback={"{wishlistCount} find{value} saved"} values={{ wishlistCount: wishlistCount, value: wishlistCount === 1 ? "" : "s" }} />}
-                </strong>
-                <p><StorefrontText id="header.your-saved-finds-stay-in-this-browsing" fallback="Your saved finds stay in this browsing preview." /></p>
-              </>
-            )}
-            {panel === "bag" && (
-              <>
-                <span className="popover-kicker"><StorefrontText id="header.your-shopping-cart" fallback="Your shopping cart" /></span>
-                <strong>
-                  {cartCount === 0
-                    ? <StorefrontText id="header.your-cart-is-ready-for-a-good" fallback="Your cart is ready for a good find." />
-                    : <StorefrontText id="header.cartcount-item-value-in-your-cart" fallback={"{cartCount} item{value} in your cart"} values={{ cartCount: cartCount, value: cartCount === 1 ? "" : "s" }} />}
-                </strong>
-                <p><StorefrontText id="header.checkout-is-not-enabled-in-this-storefront" fallback="Checkout is not enabled in this storefront preview." /></p>
-                <Link href="/shop" className="text-link" onClick={closeMenus}><StorefrontText id="header.continue-shopping" fallback="Continue shopping" /><Icon name="arrow-right" size={15} />
+                <strong><StorefrontText id="header.your-account" fallback="Your account" /></strong>
+                <p><StorefrontText id="header.accounts-preview" fallback="20ISH customer accounts are currently unavailable." /></p>
+                <Link href="/contact" className="text-link" onClick={closeMenus}>
+                  <StorefrontText id="header.account-contact" fallback="Contact customer care" /><Icon name="arrow-right" size={15} />
                 </Link>
               </>
             )}
+            {panel !== "account" && <ShoppingPanel key={panel} mode={panel} products={shoppingProducts} onNavigate={closeMenus} />}
           </div>
         )}
       </div>
 
       {searchOpen && (
-        <div className="header-search-panel">
+        <div className="header-search-panel" id="storefront-search-panel">
           <form onSubmit={submitSearch} role="search" className="container-shell">
             <Icon name="search" size={20} />
             <input
+              type="search"
               aria-label={copy("header.search-products", "Search products")}
               placeholder={copy("header.what-are-you-looking-for", "What are you looking for?")}
               value={search}
@@ -278,9 +313,8 @@ export function SiteHeader({ announcement, categories }: HeaderProps) {
       >
         <div className="storefront-drawer-inner">
           <div className="storefront-drawer-header">
-            <Link href="/" className="brand-lockup" onClick={closeMenus} aria-label={copy("header.twentyfinds-home", "TWENTYFINDS home")}>
-              <span className="brand-mark">20</span>
-              <span className="brand-wordmark"><StorefrontText id="header.twentyfinds" fallback="TWENTYFINDS" /></span>
+            <Link href="/" className="brand-lockup" onClick={closeMenus} aria-label={copy("header.twentyfinds-home", `${storefrontBrand.name} home`)}>
+              <BrandLogo copyId="header.twentyfinds" />
             </Link>
             <button type="button" className="icon-button drawer-close" aria-label={copy("header.close-menu", "Close menu")} onClick={() => drawer.current?.close()}>
               <Icon name="close" size={22} />

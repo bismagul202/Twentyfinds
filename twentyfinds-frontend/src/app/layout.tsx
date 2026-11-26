@@ -1,11 +1,14 @@
 import { formatStorefrontCopy } from "@/features/storefront/copy-text";
+import { storefrontBrand, storefrontContact } from "@/features/storefront/brand";
 import { Suspense } from "react";
 import { StorefrontCopyProvider } from "@/features/storefront/StorefrontCopy";
 import { getStorefront } from "@/features/storefront/cms";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import { SiteFooter } from "@/components/storefront/SiteFooter";
+import { Icon } from "@/components/storefront/Icon";
 import { SiteHeader } from "@/components/storefront/SiteHeader";
+import { RouteSkeleton } from "@/components/storefront/RouteSkeleton";
 import { StorefrontProvider } from "@/features/storefront/StorefrontProvider";
 import "./globals.css";
 import "./storefront-design.css";
@@ -15,25 +18,21 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export async function generateMetadata(): Promise<Metadata> {
   const { copy } = await getStorefront().catch(() => ({ copy: {} }));
   const text = (id: string, fallback: string) => formatStorefrontCopy(copy, id, fallback);
   return {
     title: {
-      default: text("site.seo-title", "TWENTYFINDS | Everything You Love. Under £20."),
-      template: text("site.seo-template", "%s | TWENTYFINDS"),
+      default: text("site.seo-title", `${storefrontBrand.name} | ${storefrontBrand.primaryTagline.join(" ")}`),
+      template: text("site.seo-template", `%s | ${storefrontBrand.name}`),
     },
     description: text("site.seo-description", "Discover fashion, home, beauty, gadgets and more. Find the good stuff, all for under £20."),
   };
 }
 
 async function StorefrontShell({ children }: { children: React.ReactNode }) {
-  const { categories, pages, copy } = await getStorefront().catch(() => ({ categories: [], pages: [], copy: {} }));
+  const storefront = await getStorefront().catch(() => null);
+  const { categories = [], pages = [], copy = {}, products = [], previewCatalog } = storefront ?? {};
   const announcement = pages.find((page) => page.slug === "site-announcement");
 
   return (
@@ -41,10 +40,18 @@ async function StorefrontShell({ children }: { children: React.ReactNode }) {
       <StorefrontProvider>
         <SiteHeader
           announcement={announcement}
-          categories={categories.filter((category) => !category.parentSlug).map(({ name, slug }) => ({ name, slug }))}
+          categories={categories.map(({ name, slug }) => ({ name, slug }))}
+          shoppingProducts={previewCatalog ? [] : products.map(({ slug, name, image, price, variants }) => ({
+            slug, name, image, price, variants,
+          }))}
         />
-        <main className="site-main">{children}</main>
+        <main id="main-content" className="site-main" tabIndex={-1}>{children}</main>
         <SiteFooter pages={pages} categories={categories} copy={copy} />
+        <a className="whatsapp-float" href={storefrontContact.whatsappHref}
+          aria-label={formatStorefrontCopy(copy, "contact.whatsapp-floating", "Chat with 20ISH on WhatsApp")}
+          target="_blank" rel="noopener noreferrer">
+          <Icon name="whatsapp" size={30} />
+        </a>
       </StorefrontProvider>
     </StorefrontCopyProvider>
   );
@@ -53,11 +60,11 @@ async function StorefrontShell({ children }: { children: React.ReactNode }) {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang={storefrontBrand.locale}
+      className={`${geistSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Suspense>
+        <Suspense fallback={<main id="main-content" className="site-main" tabIndex={-1}><RouteSkeleton /></main>}>
           <StorefrontShell>{children}</StorefrontShell>
         </Suspense>
       </body>

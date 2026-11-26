@@ -2,6 +2,7 @@ import { StorefrontText } from "@/features/storefront/StorefrontCopy";
 import { Suspense, type ReactNode } from "react";
 import { getCmsPage, type CmsPage } from "@/features/storefront/cms";
 import Link from "next/link";
+import { Icon } from "./Icon";
 
 export type ContentSection = {
   title: ReactNode;
@@ -11,7 +12,7 @@ export type ContentSection = {
 export function PublishedPage({ page }: { page: CmsPage }) {
   return (
     <article className="content-page container-shell">
-      <div className="content-page-topline"><Link href="/"><StorefrontText id="content.home" fallback="Home" /></Link><span>/</span><span>{page.title}</span></div>
+      <div className="content-page-topline"><Link href="/"><StorefrontText id="content.home" fallback="Home" /></Link><span aria-hidden="true">/</span><span aria-current="page">{page.title}</span></div>
       <header className="content-page-header"><h1>{page.title}</h1></header>
       <p className="cms-page-copy">{page.content}</p>
     </article>
@@ -28,24 +29,26 @@ export function ManagedContent({ slug, children }: { slug: string; children: Rea
 }
 
 export function ContentPage({
-  eyebrow = <StorefrontText id="content.default-eyebrow" fallback="The TWENTYFINDS edit" />,
+  eyebrow = <StorefrontText id="content.default-eyebrow" fallback="The 20ISH edit" />,
   title,
   intro,
   sections,
   note,
+  links,
 }: {
   eyebrow?: ReactNode;
   title: ReactNode;
   intro: ReactNode;
   sections: ContentSection[];
   note?: ReactNode;
+  links?: { href: string; label: ReactNode }[];
 }) {
   return (
-    <div className="content-page container-shell">
+    <article className="content-page container-shell">
       <div className="content-page-topline">
         <Link href="/"><StorefrontText id="content.home" fallback="Home" /></Link>
-        <span>/</span>
-        <span>{title}</span>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{title}</span>
       </div>
       <header className="content-page-header">
         <span className="eyebrow">{eyebrow}</span>
@@ -56,9 +59,6 @@ export function ContentPage({
       <div className="content-sections">
         {sections.map((section, index) => (
           <section className="content-section" key={index}>
-            <span className="content-section-number">
-              {String(index + 1).padStart(2, "0")}
-            </span>
             <div>
               <h2>{section.title}</h2>
               <p>{section.body}</p>
@@ -66,14 +66,22 @@ export function ContentPage({
           </section>
         ))}
       </div>
-      <div className="content-page-cta">
+      {links?.length ? (
+        <div className="support-page-links">
+          {links.map(({ href, label }, index) => (
+            <Link key={href} href={href} className={index === 0 ? "button button-dark" : "text-link"}>
+              {label}<Icon name="arrow-right" size={16} />
+            </Link>
+          ))}
+        </div>
+      ) : <div className="content-page-cta">
         <div>
           <span className="eyebrow"><StorefrontText id="content.fancy-a-little-browse" fallback="Fancy a little browse?" /></span>
           <h2><StorefrontText id="content.find-the-good-stuff" fallback="Find the good stuff." /></h2>
         </div>
         <Link href="/shop" className="button button-dark"><StorefrontText id="content.shop-all" fallback="Shop all" /><span aria-hidden="true">↗</span>
         </Link>
-      </div>
-    </div>
+      </div>}
+    </article>
   );
 }

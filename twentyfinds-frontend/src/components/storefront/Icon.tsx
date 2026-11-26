@@ -20,6 +20,7 @@ export type IconName =
   | "facebook"
   | "tiktok"
   | "mail"
+  | "whatsapp"
   | "check";
 
 const paths: Record<IconName, ReactNode> = {
@@ -119,6 +120,12 @@ const paths: Record<IconName, ReactNode> = {
     <>
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="m3 7 9 6 9-6" />
+    </>
+  ),
+  whatsapp: (
+    <>
+      <path d="M20.8 11.9a8.8 8.8 0 0 1-13 7.7l-4.6 1.2 1.2-4.5a8.8 8.8 0 1 1 16.4-4.4Z" />
+      <path d="M9 7.9c-.5-.3-1.1.3-1.2.9-.2 1.5 1 3.5 2.5 5 1.5 1.5 3.5 2.7 5 2.5.6-.1 1.2-.7.9-1.2l-1.4-1c-.3-.2-.6-.1-.8.2l-.4.4c-1.4-.6-2.7-1.9-3.3-3.3l.4-.4c.3-.2.4-.5.2-.8L10 8.8 9 7.9Z" />
     </>
   ),
   check: <path d="m5 12 4 4L19 6" />,

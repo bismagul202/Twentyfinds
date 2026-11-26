@@ -1,14 +1,18 @@
 "use client";
 import { StorefrontText, useStorefrontCopy } from "@/features/storefront/StorefrontCopy";
 
-import { useMemo, useState } from "react";
-import { getProductPrice, type StoreCategory, type StoreProduct } from "@/features/storefront/data";
+import { useMemo, useRef, useState } from "react";
+import type { StoreCategory, StoreProduct } from "@/features/storefront/data";
+import { catalogueBudget, catalogueSort, filterCatalogue } from "@/features/storefront/catalogue";
+import Link from "next/link";
 import { ProductGrid } from "./ProductGrid";
 import { Icon } from "./Icon";
 
 export function ShopListing({
   categories,
   products,
+  collection = false,
+  initialCategory = "all",
   initialQuery = "",
   initialSort = "featured",
   initialBudget = "all",
@@ -16,77 +20,78 @@ export function ShopListing({
 }: {
   categories: StoreCategory[];
   products: StoreProduct[];
+  collection?: boolean;
+  initialCategory?: string;
   initialQuery?: string;
   initialSort?: string;
   initialBudget?: string;
   initialDeals?: boolean;
 }) {
   const copy = useStorefrontCopy();
+  const searchInput = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState(initialQuery);
-  const [category, setCategory] = useState("all");
-  const [sort, setSort] = useState(initialSort);
-  const [budget, setBudget] = useState(initialBudget);
+  const [category, setCategory] = useState(
+    categories.some(({ slug }) => slug === initialCategory) ? initialCategory : "all",
+  );
+  const [sort, setSort] = useState(catalogueSort(initialSort));
+  const [budget, setBudget] = useState(catalogueBudget(initialBudget));
   const [dealsOnly, setDealsOnly] = useState(initialDeals);
 
-  const visibleProducts = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    const filtered = products.filter((product) => {
-      const price = getProductPrice(product);
-      const matchesQuery =
-        !normalizedQuery ||
-        `${product.name} ${product.description} ${product.categorySlug}`
-          .toLowerCase()
-          .includes(normalizedQuery);
-      const matchesCategory =
-        category === "all" || product.categorySlug === category;
-      const matchesBudget =
-        budget === "all" ||
-        (budget === "under-5" && price < 5) ||
-        (budget === "under-10" && price < 10) ||
-        (budget === "under-20" && price < 20);
-      const matchesDeals = !dealsOnly || product.compareAt !== undefined;
-      const matchesSort =
-        sort !== "bestsellers" || product.collections.includes("bestseller");
-
-      return (
-        matchesQuery &&
-        matchesCategory &&
-        matchesBudget &&
-        matchesDeals &&
-        matchesSort
-      );
-    });
-
-    if (sort === "new") {
-      return filtered.filter((product) => product.collections.includes("new"));
+  const visibleProducts = useMemo(() => filterCatalogue(products, categories, {
+    query, category, budget, sort, dealsOnly,
+  }), [budget, categories, category, dealsOnly, products, query, sort]);
+  const activeFilters = Boolean(query.trim() || category !== "all" || budget !== "all" || sort !== "featured" || dealsOnly);
+  const departments = categories.filter(({ parentSlug }) => !parentSlug);
+  const countLabel = visibleProducts.length === 1 ? "find" : "finds";
+  const countNamespace = collection ? "category" : "shop";
+  const empty = products.length > 0
+    ? {
+      title: copy("shop.no-finds-for-that-one", "No finds for that one"),
+      message: copy("shop.try-a-different-search-or-clear-a", "Try a different search or clear a filter to see more little favourites."),
     }
+    : collection ? {
+      title: copy("category.more-finds-are-on-the-way", "More finds are on the way"),
+      message: copy("category.we-re-making-room-for-this-category", "We're making room for this category. Come back soon, or explore everything else."),
+    } : {
+      title: copy("shop.catalogue-empty", "No products to browse yet"),
+      message: copy("shop.catalogue-empty-description", "Check back when new finds are published."),
+    };
 
-    if (sort === "price-low") {
-      return filtered.sort((first, second) => getProductPrice(first) - getProductPrice(second));
-    }
-
-    if (sort === "price-high") {
-      return filtered.sort((first, second) => getProductPrice(second) - getProductPrice(first));
-    }
-
-    return filtered;
-  }, [budget, category, dealsOnly, products, query, sort]);
+  function clearFilters() {
+    setQuery("");
+    setCategory("all");
+    setBudget("all");
+    setSort("featured");
+    setDealsOnly(false);
+    searchInput.current?.focus();
+  }
 
   return (
-    <div className="shop-page container-shell">
-      <div className="shop-heading">
+    <div className={collection ? "catalogue-results" : "shop-page container-shell catalogue-results"}>
+      {!collection && <div className="shop-heading">
         <div>
           <span className="eyebrow"><StorefrontText id="shop.good-finds-all-in-one-place" fallback="Good finds, all in one place" /></span>
-          <h1><StorefrontText id="shop.shop-all" fallback="Shop all" /></h1>
+          <h1>{initialQuery.trim()
+            ? <StorefrontText id="shop.search-results" fallback="Search results" />
+            : <StorefrontText id="shop.shop-all" fallback="Shop all" />}</h1>
           <p><StorefrontText id="shop.little-things-you-ll-love-with-nothing" fallback="Little things you'll love, with nothing over £19.99." /></p>
         </div>
         <span className="shop-heading-sticker"><StorefrontText id="shop.all-under" fallback="All under" /><br />£20 ✳</span>
-      </div>
+      </div>}
+      {!collection && departments.length > 0 && (
+        <details className="catalogue-departments">
+          <summary><StorefrontText id="shop.browse-categories" fallback="Browse categories" /></summary>
+          <nav className="catalogue-category-links" aria-label={copy("shop.browse-categories", "Browse categories")}>
+            {departments.map(({ slug, name }) => <Link key={slug} href={`/categories/${slug}`}>{name}</Link>)}
+          </nav>
+        </details>
+      )}
 
       <div className="shop-toolbar">
         <label className="shop-search">
           <Icon name="search" size={18} />
           <input
+            ref={searchInput}
             type="search"
             aria-label={copy("shop.search-all-products", "Search all products")}
             placeholder={copy("shop.search-finds", "Search finds...")}
@@ -94,7 +99,7 @@ export function ShopListing({
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        <label className="filter-select">
+        {categories.length > (collection ? 1 : 0) && <label className="filter-select">
           <span className="sr-only"><StorefrontText id="shop.filter-by-category" fallback="Filter by category" /></span>
           <select value={category} onChange={(event) => setCategory(event.target.value)}>
             <option value="all"><StorefrontText id="shop.all-categories" fallback="All categories" /></option>
@@ -104,7 +109,7 @@ export function ShopListing({
               </option>
             ))}
           </select>
-        </label>
+        </label>}
         <label className="filter-select">
           <span className="sr-only"><StorefrontText id="shop.filter-by-price" fallback="Filter by price" /></span>
           <select value={budget} onChange={(event) => setBudget(event.target.value)}>
@@ -119,6 +124,7 @@ export function ShopListing({
           <select value={sort} onChange={(event) => setSort(event.target.value)}>
             <option value="featured"><StorefrontText id="shop.featured" fallback="Featured" /></option>
             <option value="new"><StorefrontText id="shop.new-arrivals" fallback="New arrivals" /></option>
+            <option value="trending"><StorefrontText id="shop.trending" fallback="Trending" /></option>
             <option value="bestsellers"><StorefrontText id="shop.bestsellers" fallback="Bestsellers" /></option>
             <option value="price-low"><StorefrontText id="shop.price-low-to-high" fallback="Price: low to high" /></option>
             <option value="price-high"><StorefrontText id="shop.price-high-to-low" fallback="Price: high to low" /></option>
@@ -132,17 +138,19 @@ export function ShopListing({
           />
           <span><StorefrontText id="shop.special-offers" fallback="Special offers" /></span>
         </label>
-        <span className="results-count">
-          {visibleProducts.length} {visibleProducts.length === 1 ? <StorefrontText id="shop.find" fallback="find" /> : <StorefrontText id="shop.finds" fallback="finds" />}
-        </span>
       </div>
-
-      <ProductGrid
-        products={visibleProducts}
-        emptyTitle={<StorefrontText id="shop.no-finds-for-that-one" fallback="No finds for that one" />}
-        emptyMessage={<StorefrontText id="shop.try-a-different-search-or-clear-a" fallback="Try a different search or clear a filter to see more little favourites." />}
-      />
-      <p className="shop-price-note"><StorefrontText id="shop.every-product-is-priced-between-0-01" fallback="Every product is priced between £0.01 and £19.99." /></p>
+      <div className="catalogue-results-bar">
+        <p className="results-count" role="status" aria-atomic="true">
+          {visibleProducts.length} {copy(`${countNamespace}.${countLabel}`, countLabel)}
+        </p>
+        {activeFilters && (
+          <button type="button" className="text-link catalogue-clear" onClick={clearFilters}>
+            <StorefrontText id="shop.clear-filters" fallback="Clear filters" />
+          </button>
+        )}
+      </div>
+      <ProductGrid products={visibleProducts} emptyTitle={empty.title} emptyMessage={empty.message} />
+      {!collection && <p className="shop-price-note"><StorefrontText id="shop.every-product-is-priced-between-0-01" fallback="Every product is priced between £0.01 and £19.99." /></p>}
     </div>
   );
 }

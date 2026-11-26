@@ -25,11 +25,12 @@ type Storefront = {
   pages: CmsPage[];
   copy: Record<string, string>;
   previewCatalog?: boolean;
+  publishedCategorySlugs?: string[];
 };
 
 export const getStorefront = cache(async (): Promise<Storefront> => {
   const endpoint = process.env.STOREFRONT_CMS_URL;
-  if (!endpoint) return { categories, products, banners: [], pages: [], copy: {} };
+  if (!endpoint) return { categories, products, banners: [], pages: [], copy: {}, previewCatalog: true, publishedCategorySlugs: [] };
 
   const response = await fetch(new URL("storefront", endpoint.replace(/\/?$/, "/")), {
     cache: "no-store",
@@ -45,6 +46,7 @@ export const getStorefront = cache(async (): Promise<Storefront> => {
   return {
     ...storefront,
     previewCatalog: true,
+    publishedCategorySlugs: [...publishedCategorySlugs],
     categories: [...storefront.categories, ...categories.filter((category) => !publishedCategorySlugs.has(category.slug))],
     products: products.filter((product) => product.collections.includes("new")).slice(0, 6).map((product) => ({
       ...product,
@@ -70,5 +72,11 @@ export async function managedMetadata(slug: string, fallback: Metadata): Promise
   const description = typeof fallback.description === "string"
     ? formatStorefrontCopy(copy, `${slug}.seo-description`, fallback.description)
     : fallback.description;
-  return { ...fallback, title: page?.metaTitle ?? page?.title ?? title, description: page?.metaDescription ?? description };
+  const managedTitle = page?.metaTitle ?? page?.title ?? title;
+  const managedDescription = page?.metaDescription ?? description;
+  return {
+    ...fallback,
+    ...(managedTitle !== undefined && { title: managedTitle }),
+    ...(managedDescription !== undefined && { description: managedDescription }),
+  };
 }

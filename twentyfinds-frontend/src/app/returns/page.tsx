@@ -1,23 +1,24 @@
 import { StorefrontText } from "@/features/storefront/StorefrontCopy";
 import { managedMetadata } from "@/features/storefront/cms";
 import type { Metadata } from "next";
-import { ContentPage, ManagedContent } from "@/components/storefront/ContentPage";
+import { HelpPage } from "@/components/storefront/HelpPage";
 
 export function generateMetadata(): Promise<Metadata> {
   return managedMetadata("returns", {
     title: "Returns & refunds",
-    description: "Returns and refunds information for TWENTYFINDS.",
+    description: "Returns and refunds information for 20ISH.",
   });
 }
 
 export default function ReturnsPage() {
   return (
-    <ManagedContent slug="returns">
-      <ContentPage
+      <HelpPage
+        slug="returns"
+        icon="refresh"
         eyebrow={<StorefrontText id="returns.the-after-shopping-bits" fallback="The after-shopping bits" />}
         title={<StorefrontText id="returns.returns-refunds" fallback={"Returns & refunds"} />}
         intro={<StorefrontText id="returns.we-want-the-things-you-find-to" fallback="We want the things you find to feel right. The final returns process will be confirmed before the store opens." />}
-        note={<StorefrontText id="returns.draft-information-for-the-storefront-preview-no" fallback="Draft information for the storefront preview — no purchases have been made through this site." />}
+        note={<StorefrontText id="returns.draft-information-for-the-storefront-preview-no" fallback="Preview information only. The returns and refunds policy is pending owner review." />}
         sections={[
           {
             title: <StorefrontText id="returns.our-approach" fallback="Our approach" />,
@@ -33,10 +34,13 @@ export default function ReturnsPage() {
           },
           {
             title: <StorefrontText id="returns.questions" fallback="Questions" />,
-            body: <StorefrontText id="returns.for-now-explore-the-faqs-or-use" fallback="For now, explore the FAQs or use the contact page to preview how we'll make it easy to get in touch." />,
+            body: <StorefrontText id="returns.for-now-explore-the-faqs-or-use" fallback="Check the FAQs or use the contact form for questions about the planned returns process." />,
           },
         ]}
+        links={[
+          { href: "/faq", label: <StorefrontText id="returns.faq-link" fallback="Read the FAQs" /> },
+          { href: "/contact", label: <StorefrontText id="content.contact-us" fallback="Contact us" /> },
+        ]}
       />
-    </ManagedContent>
   );
 }

@@ -3,6 +3,7 @@ import { StorefrontText, useStorefrontCopy } from "@/features/storefront/Storefr
 
 import { apiUrlFor } from "@/lib/api";
 import { useRef, useState, type FormEvent } from "react";
+import { Icon } from "./Icon";
 
 export function ContactForm() {
   const copy = useStorefrontCopy();
@@ -25,8 +26,12 @@ export function ContactForm() {
         body: JSON.stringify(fields),
         signal: AbortSignal.timeout(10000),
       });
-      if (!response.ok) {
-        setStatus(response.status === 422 ? "invalid" : "error");
+      if (response.status === 422) {
+        setStatus("invalid");
+        return;
+      }
+      if (response.status !== 201 || (await response.json())?.received !== true) {
+        setStatus("error");
         return;
       }
 
@@ -40,7 +45,10 @@ export function ContactForm() {
   }
 
   return (
-    <form className="contact-form" onSubmit={submitForm}>
+    <form className="contact-form" onSubmit={submitForm} aria-busy={status === "sending"} aria-describedby="contact-required-fields">
+      <p className="contact-form-required" id="contact-required-fields">
+        <StorefrontText id="contact.required-fields" fallback="Your name, email address and message are required." />
+      </p>
       <div className="form-field-row">
         <label><StorefrontText id="contact.your-name" fallback="Your name" /><input name="name" autoComplete="name" maxLength={120} required placeholder={copy("contact.e-g-alex-taylor", "e.g. Alex Taylor")} />
         </label>
@@ -61,13 +69,13 @@ export function ContactForm() {
           <option value="feedback"><StorefrontText id="contact.feedback-or-something-else" fallback="Feedback or something else" /></option>
         </select>
       </label>
-      <label><StorefrontText id="contact.your-message" fallback="Your message" /><textarea name="message" rows={5} minLength={5} maxLength={4000} required placeholder={copy("contact.write-your-message-here", "Write your message here...")} />
+      <label><StorefrontText id="contact.your-message" fallback="Your message" /><textarea name="message" rows={6} minLength={5} maxLength={4000} required placeholder={copy("contact.write-your-message-here", "Write your message here...")} />
       </label>
       <div hidden aria-hidden="true"><input name="website" tabIndex={-1} autoComplete="off" /></div>
       <button type="submit" className="button button-dark" disabled={status === "sending"}>
         {status === "sending"
           ? <StorefrontText id="contact.sending" fallback="Sending..." />
-          : <StorefrontText id="contact.send-a-note" fallback="Send a note" />}
+          : <><StorefrontText id="contact.send-a-note" fallback="Send message" /><Icon name="arrow-right" size={17} /></>}
       </button>
       {status === "sent" && (
         <p className="form-message is-success" role="status"><StorefrontText id="contact.message-received" fallback="Thanks. We've received your message." /></p>

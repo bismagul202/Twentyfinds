@@ -10,9 +10,12 @@ import {
 } from "react";
 
 type StorefrontContextValue = {
+  cart: Readonly<Record<string, number>>;
+  wishlist: readonly string[];
   cartCount: number;
   wishlistCount: number;
   addToCart: (productSlug: string, quantity?: number) => void;
+  setCartQuantity: (key: string, quantity: number) => void;
   toggleWishlist: (productSlug: string) => void;
   isWishlisted: (productSlug: string) => boolean;
 };
@@ -30,6 +33,17 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const setCartQuantity = useCallback((key: string, quantity: number) => {
+    if (!Number.isSafeInteger(quantity) || quantity < 0) return;
+    setCart((current) => {
+      if (!Object.hasOwn(current, key) || current[key] === quantity) return current;
+      const next = { ...current };
+      if (quantity === 0) delete next[key];
+      else next[key] = quantity;
+      return next;
+    });
+  }, []);
+
   const toggleWishlist = useCallback((productSlug: string) => {
     setWishlist((current) =>
       current.includes(productSlug)
@@ -45,13 +59,16 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      cart,
+      wishlist,
       cartCount: Object.values(cart).reduce((total, quantity) => total + quantity, 0),
       wishlistCount: wishlist.length,
       addToCart,
+      setCartQuantity,
       toggleWishlist,
       isWishlisted,
     }),
-    [addToCart, cart, isWishlisted, toggleWishlist, wishlist.length],
+    [addToCart, cart, isWishlisted, setCartQuantity, toggleWishlist, wishlist],
   );
 
   return (

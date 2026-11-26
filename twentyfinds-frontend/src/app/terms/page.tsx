@@ -6,7 +6,7 @@ import { ContentPage, ManagedContent } from "@/components/storefront/ContentPage
 export function generateMetadata(): Promise<Metadata> {
   return managedMetadata("terms", {
     title: "Terms & conditions",
-    description: "Terms information for the TWENTYFINDS storefront preview.",
+    description: "Terms and conditions for 20ISH.",
   });
 }
 
@@ -15,17 +15,17 @@ export default function TermsPage() {
     <ManagedContent slug="terms">
       <ContentPage
         eyebrow={<StorefrontText id="terms.the-important-bits" fallback="The important bits" />}
-        title={<StorefrontText id="terms.terms-conditions" fallback={"Terms & conditions"} />}
-        intro={<StorefrontText id="terms.welcome-to-the-twentyfinds-storefront-preview-this" fallback="Welcome to the TWENTYFINDS storefront preview. This site is for browsing the planned customer experience only." />}
-        note={<StorefrontText id="terms.placeholder-content-only-final-terms-require-review" fallback="Placeholder content only — final terms require review before the store accepts orders." />}
+        title={<StorefrontText id="terms.terms-conditions" fallback="Terms and Conditions" />}
+        intro={<StorefrontText id="terms.welcome-to-the-twentyfinds-storefront-preview-this" fallback="Welcome to 20ISH. You can browse our catalogue online." />}
+        note={<StorefrontText id="terms.placeholder-content-only-final-terms-require-review" fallback="Preview information only. The terms are pending owner review and publication." />}
         sections={[
           {
             title: <StorefrontText id="terms.preview-use" fallback="Preview use" />,
-            body: <StorefrontText id="terms.products-prices-descriptions-and-availability-shown-here" fallback="Products, prices, descriptions and availability shown here are illustrative demo content. No purchase contract can be formed through this preview." />,
+            body: <StorefrontText id="terms.products-prices-descriptions-and-availability-shown-here" fallback="You can browse the published 20ISH catalogue. Order placement is currently unavailable." />,
           },
           {
             title: <StorefrontText id="terms.prices-and-products" fallback="Prices and products" />,
-            body: <StorefrontText id="terms.the-intended-store-policy-is-to-price" fallback="The intended store policy is to price every product from £0.01 to £19.99. Sample prices on this site do not represent a confirmed offer or stock availability." />,
+            body: <StorefrontText id="terms.the-intended-store-policy-is-to-price" fallback="Published individual product prices are shown in GBP and capped at £19.99." />,
           },
           {
             title: <StorefrontText id="terms.accounts-and-checkout" fallback="Accounts and checkout" />,

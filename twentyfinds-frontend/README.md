@@ -22,6 +22,16 @@ Open <http://localhost:3000>. Set `NEXT_PUBLIC_API_URL` in `.env.local` to the L
 
 ## Storefront preview
 
-The frontend includes the home page, shop-all catalog, category and product detail routes, and About, Contact, FAQ, Shipping, Returns, Privacy, and Terms pages. Search, category/price filters, sorting, saved-item buttons, the preview bag, and forms are front-end interactions only. Checkout, customer accounts, and storefront contact/newsletter submissions remain preview functionality. The owner CMS and public storefront API run in Laravel.
+The storefront reads published catalogue and content data from Laravel. Search, filters and sorting run against the loaded catalogue in the browser. Contact uses the existing API and confirms receipt only after acknowledgement. Newsletter sign-up, accounts and checkout are unavailable.
 
-Product and policy content is illustrative. Product imagery is loaded from Unsplash; confirm image rights and replace sample content before launch.
+Shop results and homepage product sections are empty until products are published. Collection guides use frontend fallbacks when no CMS page is published. The Personalisation and Wedding & Nikah guides support browsing and enquiries. Customisation, proof approval and bespoke order workflows are future work.
+
+### Cart and wishlist persistence
+
+The cart and wishlist use in-memory React state. Items stay available during client-side navigation while the storefront provider stays mounted. A full reload, a new tab or closing the browsing session starts with empty lists. There is no browser storage, account synchronisation or server-side cart.
+
+The subtotal is calculated from published catalogue prices for display. Delivery charges are unavailable and checkout is disabled. Persistent carts and server-validated pricing and delivery belong to a future commerce phase.
+
+### Supporting content for owner review
+
+The fallback Privacy Policy, Terms and Conditions, and Returns and Refunds pages are draft preview copy. Before launch, the owner should confirm and publish the business and contact details, actual data handling and retention, sales terms, and returns eligibility, timing and process. Delivery destinations, charges and time estimates also need confirmation. Review published CMS overrides alongside these drafts, since published content takes precedence.

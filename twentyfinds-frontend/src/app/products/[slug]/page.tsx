@@ -5,6 +5,9 @@ import { notFound } from "next/navigation";
 import { ProductDetails } from "@/components/storefront/ProductDetails";
 import { RouteSkeleton } from "@/components/storefront/RouteSkeleton";
 import { products as sampleProducts } from "@/features/storefront/data";
+import { categoryBranch } from "@/features/storefront/catalogue";
+import { StorefrontText } from "@/features/storefront/StorefrontCopy";
+import { ProductGrid } from "@/components/storefront/ProductGrid";
 
 export function generateStaticParams() {
   return sampleProducts.map((product) => ({ slug: product.slug }));
@@ -16,8 +19,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const { products } = await getStorefront();
-  const product = products.find((item) => item.slug === slug);
+  const { products, previewCatalog } = await getStorefront();
+  const product = previewCatalog ? undefined : products.find((item) => item.slug === slug);
 
   return {
     title: product?.name ?? "Product",
@@ -43,12 +46,30 @@ async function ProductContent({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { products } = await getStorefront();
-  const product = products.find((item) => item.slug === slug);
+  const { categories, products, previewCatalog } = await getStorefront();
+  const product = previewCatalog ? undefined : products.find((item) => item.slug === slug);
 
   if (!product) {
     notFound();
   }
 
-  return <ProductDetails product={product} />;
+  const category = categories.find(({ slug }) => slug === product.categorySlug);
+  const branch = categoryBranch(categories, category?.parentSlug ?? product.categorySlug);
+  const candidates = products.filter((item) => item.slug !== slug && branch.has(item.categorySlug));
+  const related = [
+    ...candidates.filter((item) => item.categorySlug === product.categorySlug),
+    ...candidates.filter((item) => item.categorySlug !== product.categorySlug),
+  ].slice(0, 4);
+
+  return (
+    <>
+      <ProductDetails key={slug} product={product} />
+      {related.length > 0 && (
+        <section className="product-related container-shell" aria-labelledby="product-related-title">
+          <h2 id="product-related-title"><StorefrontText id="product.related-products" fallback="Related finds" /></h2>
+          <ProductGrid products={related} />
+        </section>
+      )}
+    </>
+  );
 }

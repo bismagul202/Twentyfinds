@@ -34,8 +34,9 @@ export function ProductCard({ product }: { product: StoreProduct }) {
         >
           <ImageCanvas
             src={product.image}
-            alt={product.name}
+            alt=""
             className="product-photo"
+            sizes="(max-width: 680px) 50vw, (max-width: 1000px) 34vw, 420px"
           />
         </Link>
         {product.label && <span className="product-label">{product.label}</span>}
