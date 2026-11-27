@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'order_number',
+    'checkout_token',
+    'checkout_fingerprint',
+    'customer_email',
     'customer_id',
     'customer_address_id',
     'coupon_id',
@@ -32,6 +35,25 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Order extends Model
 {
+    public const FULFILLMENT_STATUSES = [
+        'confirmed' => 'Pending',
+        'in_progress' => 'In progress',
+        'delivered' => 'Delivered',
+    ];
+
+    public function canUpdateFulfillment(): bool
+    {
+        return isset(self::FULFILLMENT_STATUSES[$this->status]);
+    }
+
+    public function fulfillmentLabel(): string
+    {
+        return self::FULFILLMENT_STATUSES[$this->status] ?? match ($this->status) {
+            'pending' => 'Awaiting payment',
+            default => ucfirst($this->status),
+        };
+    }
+
     protected function casts(): array
     {
         return [

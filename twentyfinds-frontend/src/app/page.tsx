@@ -67,7 +67,7 @@ export default function Home() {
 }
 
 async function HomeContent() {
-  const { categories, products, banners, pages, copy, previewCatalog, publishedCategorySlugs } = await getStorefront();
+  const { categories, products, banners, pages, copy, copyOverrides = Object.keys(copy), previewCatalog, publishedCategorySlugs } = await getStorefront();
   const text = (id: string, fallback: string) => formatStorefrontCopy(copy, id, fallback);
   const categoriesBySlug = new Map(categories.map((category) => [category.slug, category]));
   const publishedSlugs = publishedCategorySlugs && new Set(publishedCategorySlugs);
@@ -75,14 +75,14 @@ async function HomeContent() {
   const hero = banners.find((banner) => ["homepage", "hero"].includes(banner.placement));
   const promotion = banners.find((banner) => banner.placement === "promotion");
   const home = pages.find((page) => page.slug === "homepage");
-  const heroTitle = home?.title ?? hero?.title ?? copy["homepage.good-taste"];
+  const heroTitle = home?.title ?? (copyOverrides.includes("homepage.good-taste") ? copy["homepage.good-taste"] : hero?.title);
   const publishedProducts = previewCatalog ? [] : products;
   const trending = publishedProducts.filter(({ collections }) => collections.includes("trending"));
   const newArrivals = publishedProducts.filter(({ collections }) => collections.includes("new"));
   const personalisedSlug = personalisation?.slugs?.find((slug) => categoriesBySlug.has(slug));
   const personalisedHref = personalisedSlug ? `/categories/${personalisedSlug}` : personalisation?.href ?? "/shop?q=personalised";
-  const hasLegacySecondaryCopy = copy["homepage.explore-personalised"] === undefined
-    && copy["homepage.browse-categories"] !== undefined;
+  const hasLegacySecondaryCopy = !copyOverrides.includes("homepage.explore-personalised")
+    && copyOverrides.includes("homepage.browse-categories");
   const deals = publishedProducts.filter((product) => product.compareAt !== undefined);
 
   return (
@@ -171,7 +171,7 @@ async function HomeContent() {
         className="home-new-arrivals"
       />
 
-      <SignatureCollections categorySlugs={categories.map(({ slug }) => slug)} />
+      <SignatureCollections categorySlugs={categories.map(({ slug }) => slug)} banners={banners} />
 
       {deals.length > 0 && promotion ? (
         <section className="editorial-campaign container-shell">

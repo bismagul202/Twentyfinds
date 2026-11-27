@@ -11,12 +11,16 @@ export type CmsPage = {
   metaDescription: string | null;
 };
 
-type CmsBanner = {
+export type CmsBanner = {
   title: string;
   image: string;
   href: string | null;
   placement: string;
 };
+
+export function bannerImage(banners: CmsBanner[], placement: string, fallback: string) {
+  return banners.find((banner) => banner.placement === placement)?.image || fallback;
+}
 
 type Storefront = {
   categories: StoreCategory[];
@@ -24,13 +28,15 @@ type Storefront = {
   banners: CmsBanner[];
   pages: CmsPage[];
   copy: Record<string, string>;
+  copyOverrides?: string[];
   previewCatalog?: boolean;
   publishedCategorySlugs?: string[];
 };
 
 export const getStorefront = cache(async (): Promise<Storefront> => {
-  const endpoint = process.env.STOREFRONT_CMS_URL;
-  if (!endpoint) return { categories, products, banners: [], pages: [], copy: {}, previewCatalog: true, publishedCategorySlugs: [] };
+  const laravelOrigin = process.env.LARAVEL_ORIGIN || "http://localhost:8000";
+  const endpoint = process.env.STOREFRONT_CMS_URL
+    || new URL("/api", laravelOrigin).href;
 
   const response = await fetch(new URL("storefront", endpoint.replace(/\/?$/, "/")), {
     cache: "no-store",

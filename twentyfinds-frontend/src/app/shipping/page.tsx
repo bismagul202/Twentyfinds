@@ -17,20 +17,20 @@ export default function ShippingPage() {
         icon="truck"
         eyebrow={<StorefrontText id="shipping.the-delivery-details" fallback="The delivery details" />}
         title={<StorefrontText id="shipping.shipping-delivery" fallback="Delivery information" />}
-        intro={<StorefrontText id="shipping.we-re-working-on-getting-the-useful" fallback="Delivery options, charges and estimated times are still being confirmed for the UK store." />}
-        note={<StorefrontText id="shipping.draft-information-for-the-storefront-preview-no" fallback="20ISH delivery information is being finalised. Order placement is currently unavailable." />}
+        intro={<StorefrontText id="shipping.we-re-working-on-getting-the-useful" fallback="We offer flat-rate delivery to UK addresses." />}
+        note={<StorefrontText id="shipping.draft-information-for-the-storefront-preview-no" fallback="Your delivery charge is shown in the order summary before you place your order." />}
         sections={[
           {
-            title: <StorefrontText id="shipping.where-we-plan-to-deliver" fallback="Where we plan to deliver" />,
-            body: <StorefrontText id="shipping.twentyfinds-is-being-developed-for-uk-customers" fallback="20ISH is being developed for UK customers. The confirmed delivery areas and any international options will be listed here before launch." />,
+            title: <StorefrontText id="shipping.where-we-plan-to-deliver" fallback="Where we deliver" />,
+            body: <StorefrontText id="shipping.twentyfinds-is-being-developed-for-uk-customers" fallback="Enter a UK address and postcode at checkout." />,
           },
           {
             title: <StorefrontText id="shipping.delivery-timing" fallback="Delivery timing" />,
-            body: <StorefrontText id="shipping.delivery-services-and-estimated-dispatch-or-arrival" fallback="Delivery services and estimated dispatch or arrival times have not yet been confirmed. We'll share clear timing information at checkout when ordering is available." />,
+            body: <StorefrontText id="shipping.delivery-services-and-estimated-dispatch-or-arrival" fallback="Contact us if you need your order by a specific date." />,
           },
           {
             title: <StorefrontText id="shipping.delivery-costs" fallback="Delivery costs" />,
-            body: <StorefrontText id="shipping.any-delivery-charges-free-delivery-thresholds-and" fallback="Any delivery charges, free-delivery thresholds and delivery options will be shown before an order is placed. There are no checkout or shipping charges in this preview." />,
+            body: <StorefrontText id="shipping.any-delivery-charges-free-delivery-thresholds-and" fallback="A flat UK delivery charge applies per order. Checkout displays the exact charge before payment." />,
           },
           {
             title: <StorefrontText id="shipping.need-a-hand" fallback="Need a hand?" />,

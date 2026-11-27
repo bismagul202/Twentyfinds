@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
-    <title>@yield('title') | TWENTYFINDS CMS</title>
+    <title>@yield('title') | 20ISH CMS</title>
     <style>
         :root{color-scheme:light;--ink:#26191c;--wine:#672536;--line:#e6d9cd;--paper:#fcf8f2;--mute:#695d5d}
         *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
@@ -41,12 +41,13 @@
     <div class="admin-shell" id="admin-shell">
         <aside class="admin-sidebar" id="admin-navigation">
             <a class="admin-brand" href="{{ route('cms.index') }}">
-                <span class="brand-emblem" aria-hidden="true">20</span>
-                <span>TWENTYFINDS<small>Store administration</small></span>
+                <img class="admin-brand-logo" src="/logo-transparent.webp" width="52" height="52" alt="">
+                <span>20ISH<small>Admin dashboard</small></span>
             </a>
             <nav aria-label="Admin navigation">
                 <a href="{{ route('cms.index') }}" @if (request()->routeIs('cms.index')) aria-current="page" @endif>Overview</a>
-                <span class="nav-group">Catalog</span>
+                <a href="{{ route('cms.orders.index') }}" @if (request()->routeIs('cms.orders.*')) aria-current="page" @endif>Orders</a>
+                <span class="nav-group">Catalogue</span>
                 @foreach (['products', 'categories'] as $menu)
                     <a href="{{ ($menu === 'pages' ? route('cms.pages') : route('cms.section', $menu)) }}" @if (($section ?? '') === $menu) aria-current="page" @endif>{{ ucfirst($menu) }}</a>
                 @endforeach
@@ -54,7 +55,7 @@
                 @foreach (['pages', 'banners'] as $menu)
                     <a href="{{ ($menu === 'pages' ? route('cms.pages') : route('cms.section', $menu)) }}" @if (($section ?? '') === $menu) aria-current="page" @endif>{{ ucfirst($menu) }}</a>
                 @endforeach
-                <a href="{{ route('cms.copy') }}" @if (request()->routeIs('cms.copy')) aria-current="page" @endif>Storefront text</a>
+                <a href="{{ route('cms.copy') }}" @if (request()->routeIs('cms.copy')) aria-current="page" @endif>20ISH content</a>
                 <a href="{{ route('cms.contact.index') }}" @if (request()->routeIs('cms.contact.*')) aria-current="page" @endif>Contact inbox</a>
             </nav>
             <div class="sidebar-account">
@@ -68,7 +69,7 @@
                 <div class="topbar-start">
                     <button id="sidebar-toggle" type="button" class="sidebar-toggle" aria-controls="admin-navigation">Menu</button>
                     <nav class="breadcrumbs" aria-label="Breadcrumb">
-                        <a href="{{ route('cms.index') }}">Admin</a><span aria-hidden="true">/</span><span>@yield('title')</span>
+                        <a href="{{ route('cms.index') }}">20ISH</a><span aria-hidden="true">/</span><span>@yield('title')</span>
                     </nav>
                 </div>
             </header>

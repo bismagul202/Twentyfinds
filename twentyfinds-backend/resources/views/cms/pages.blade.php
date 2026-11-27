@@ -3,8 +3,8 @@
 @section('content')
     <header class="dashboard-heading">
         <div>
-            <h1>Storefront pages</h1>
-            <p class="muted">Find a storefront URL and open its content editor.</p>
+            <h1>20ISH pages</h1>
+            <p class="muted">Find a page on 20ISH and open its content editor.</p>
         </div>
         <a class="button" href="{{ route('cms.edit', 'pages') }}">Add page</a>
     </header>

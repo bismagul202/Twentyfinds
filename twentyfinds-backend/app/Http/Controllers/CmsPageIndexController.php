@@ -22,6 +22,9 @@ class CmsPageIndexController extends Controller
         'returns' => ['Returns', '/returns'],
         'privacy' => ['Privacy Policy', '/privacy'],
         'terms' => ['Terms and Conditions', '/terms'],
+        'our-handmade-story' => ['Our Handmade Story', '/pages/our-handmade-story'],
+        'personalisation' => ['Personalisation', '/pages/personalisation'],
+        'wedding-nikah' => ['Wedding & Nikah', '/pages/wedding-nikah'],
     ];
 
     public function index(Request $request): View

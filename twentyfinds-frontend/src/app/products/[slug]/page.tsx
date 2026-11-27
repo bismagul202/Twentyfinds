@@ -23,8 +23,8 @@ export async function generateMetadata({
   const product = previewCatalog ? undefined : products.find((item) => item.slug === slug);
 
   return {
-    title: product?.name ?? "Product",
-    description: product?.description,
+    title: product?.metaTitle ?? product?.name ?? "Product",
+    description: product?.metaDescription ?? product?.description,
   };
 }
 

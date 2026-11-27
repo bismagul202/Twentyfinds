@@ -18,15 +18,7 @@ const storefrontDepartments = departmentGroups.flatMap(({ items }) => items)
   .filter(({ id }) => Object.hasOwn(departmentImages, id));
 
 export function getHomeDepartments(categories: StoreCategory[]) {
-  const published = categories.filter(({ parentSlug }) => !parentSlug).slice(0, 12);
-  if (!published.length) {
-    return storefrontDepartments.map(({ id, label, href }) => ({
-      id,
-      name: label,
-      href,
-      image: departmentImages[id],
-    }));
-  }
+  const published = categories.filter(({ parentSlug }) => !parentSlug);
 
   return published.map(({ slug, name, image }) => {
     const department = storefrontDepartments.find(({ slugs }) => slugs?.includes(slug));

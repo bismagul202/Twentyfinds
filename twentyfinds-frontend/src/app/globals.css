@@ -1776,7 +1776,7 @@ summary:focus-visible {
 }
 
 .category-page {
-  padding-block: 30px 90px;
+  padding-block: 0 90px;
 }
 
 .category-hero {
@@ -1785,19 +1785,22 @@ summary:focus-visible {
   min-height: 310px;
   align-items: center;
   overflow: hidden;
-  margin-top: 22px;
-  padding: 45px;
-  border-radius: 27px;
-  background: var(--lilac);
+  background: var(--burgundy);
   isolation: isolate;
 }
 
-.category-hero-image {
+.category-hero .category-hero-image {
   position: absolute;
   z-index: -2;
   inset: 0;
   background-position: center 42%;
 }
+
+.category-hero-image img { object-position: center 42%; }
+.category-hero-inner { position: relative; padding-block: 26px 45px; }
+.category-hero-inner .content-page-topline { color: var(--ivory); margin-block-end: var(--space-5); }
+.category-hero-inner .content-page-topline a:is(:hover, :focus-visible) { color: var(--white); text-decoration: underline; }
+.category-hero-inner .content-page-topline a:focus-visible { outline-color: var(--focus-ring-inverse); }
 
 .category-hero::after {
   position: absolute;
@@ -1808,7 +1811,8 @@ summary:focus-visible {
 }
 
 .category-hero-copy {
-  max-width: 560px;
+  max-width: min(560px, calc(100% - 110px));
+  padding-inline-end: 12px;
   color: white;
 }
 
@@ -1834,8 +1838,8 @@ summary:focus-visible {
 
 .category-hero-price {
   position: absolute;
-  right: 35px;
-  bottom: 30px;
+  right: 0;
+  bottom: 20px;
   display: grid;
   width: 97px;
   height: 97px;
@@ -2775,9 +2779,10 @@ summary:focus-visible {
   .shop-price-note {
     font-size: 9px;
   }
-  .content-page, .category-page, .product-detail-page, .contact-page, .faq-page {
+  .content-page, .product-detail-page, .contact-page, .faq-page {
     padding-block: 22px 60px;
   }
+  .category-page { padding-block-end: 60px; }
   .content-page-header {
     padding-block: 45px 28px;
   }
@@ -2808,9 +2813,9 @@ summary:focus-visible {
   }
   .category-hero {
     min-height: 280px;
-    padding: 25px;
-    border-radius: 21px;
   }
+  .category-hero-inner { padding-block: 20px 25px; }
+  .category-hero-copy { max-width: 100%; }
   .category-hero-copy h1 {
     max-width: 340px;
     font-size: clamp(43px, 11vw, 61px);
@@ -2820,8 +2825,8 @@ summary:focus-visible {
     font-size: 11px;
   }
   .category-hero-price {
-    right: 13px;
-    bottom: 13px;
+    position: static;
+    margin-block-start: var(--space-3);
     width: 72px;
     height: 72px;
     font-size: 8px;

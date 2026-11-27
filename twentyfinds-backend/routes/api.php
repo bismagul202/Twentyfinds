@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactSubmissionController;
 use App\Http\Controllers\StorefrontController;
 use Illuminate\Support\Facades\Route;
@@ -12,3 +13,9 @@ Route::get('/media/{file}', [StorefrontController::class, 'media'])
     ->name('cms.media');
 
 Route::post('/contact', [ContactSubmissionController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
+
+Route::get('/checkout', [CheckoutController::class, 'options']);
+Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('throttle:10,1');
+Route::get('/checkout/{token}', [CheckoutController::class, 'show'])->whereUuid('token')->middleware('throttle:90,1');
+Route::post('/checkout/{token}/cancel', [CheckoutController::class, 'cancel'])->whereUuid('token')->middleware('throttle:10,1');
+Route::post('/payments/stripe/webhook', [CheckoutController::class, 'webhook']);

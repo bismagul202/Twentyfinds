@@ -108,7 +108,7 @@ export function ShoppingPanel({ mode, products, onNavigate }: {
                     disabled={quantity <= 1} onClick={() => setCartQuantity(key, quantity - 1)}><Icon name="minus" size={15} /></button>
                   <span aria-live="polite">{quantity}</span>
                   <button type="button" aria-label={copy("product.increase-quantity", "Increase quantity")}
-                    disabled={price === null || quantity >= Number.MAX_SAFE_INTEGER}
+                    disabled={price === null || quantity >= 99}
                     onClick={() => setCartQuantity(key, quantity + 1)}><Icon name="plus" size={15} /></button>
                 </div>
                 {removeButton(product && (variant ? `${product.name} (${variant.name})` : product.name), () => setCartQuantity(key, 0))}
@@ -143,23 +143,19 @@ export function ShoppingPanel({ mode, products, onNavigate }: {
             </div>
             <div>
               <dt><StorefrontText id="shopping.shipping" fallback="Delivery" /></dt>
-              <dd><StorefrontText id="shopping.shipping-unavailable" fallback="Delivery charges pending confirmation" /></dd>
+              <dd>Calculated at checkout</dd>
             </div>
           </dl>
           {missingPrice && hasPrice && <p><StorefrontText id="shopping.subtotal-excludes-unavailable" fallback="The subtotal excludes unavailable items." /></p>}
           <Link href="/shipping" className="text-link" onClick={onNavigate}>
             <StorefrontText id="shopping.delivery-information" fallback="View delivery information" /><Icon name="arrow-right" size={15} />
           </Link>
-          <button className="button button-blue shopping-checkout" type="button" disabled aria-describedby="shopping-checkout-note">
+          {!missingPrice && <Link href="/checkout" className="button button-blue shopping-checkout" onClick={onNavigate}>
             <StorefrontText id="shopping.checkout" fallback="Checkout" />
-          </button>
-          <p id="shopping-checkout-note">
-            <StorefrontText id="header.checkout-is-not-enabled-in-this-storefront" fallback="Checkout is currently unavailable on 20ISH." />
-          </p>
+          </Link>}
         </div>
       )}
       {!isCart && <p><StorefrontText id="header.your-saved-finds-stay-in-this-browsing" fallback="Your saved finds are kept while you browse 20ISH in this tab." /></p>}
-      {isCart && empty && <p><StorefrontText id="header.checkout-is-not-enabled-in-this-storefront" fallback="Checkout is currently unavailable on 20ISH." /></p>}
       <Link href="/shop" className="text-link shopping-continue" onClick={onNavigate}>
         <StorefrontText id="header.continue-shopping" fallback="Continue shopping" /><Icon name="arrow-right" size={16} />
       </Link>

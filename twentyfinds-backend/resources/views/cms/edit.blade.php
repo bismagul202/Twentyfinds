@@ -50,7 +50,8 @@
                 <label>Selling price (GBP) <input type="number" min="0.01" max="19.99" step="0.01" name="selling_price" required value="{{ old('selling_price', $item->selling_price) }}"></label>
                 <label>Previous price (GBP) <input type="number" min="0.02" max="99999999.99" step="0.01" name="compare_at_price" value="{{ old('compare_at_price', $item->compare_at_price) }}"><small>Optional. Enter a genuine previous price to show an offer.</small></label>
                 <div class="checks">
-                    <input type="hidden" name="is_featured" value="0"><label><input type="checkbox" name="is_featured" value="1" @checked(old('is_featured', $item->is_featured))> Featured</label>
+                    <input type="hidden" name="is_new_arrival" value="0"><label><input type="checkbox" name="is_new_arrival" value="1" @checked(old('is_new_arrival', $item->is_new_arrival))> New Arrivals</label>
+                    <input type="hidden" name="is_featured" value="0"><label><input type="checkbox" name="is_featured" value="1" @checked(old('is_featured', $item->is_featured))> Trending Finds</label>
                     <input type="hidden" name="is_bestseller" value="0"><label><input type="checkbox" name="is_bestseller" value="1" @checked(old('is_bestseller', $item->is_bestseller))> Bestseller</label>
                 </div>
                 <label class="full">Add product photos
@@ -67,7 +68,7 @@
                         @endforeach
                     </select>
                 </label>
-                <label>Button destination <input name="target_url" placeholder="/shop" value="{{ old('target_url', $item->target_url) }}"><small>Optional storefront path, such as /shop or /shop?deals=1.</small></label>
+                <label>Button destination <input name="target_url" placeholder="/shop" value="{{ old('target_url', $item->target_url) }}"><small>Optional 20ISH page path, such as /shop or /shop?deals=1.</small></label>
                 <label>Starts at (UTC) <input type="datetime-local" name="starts_at" value="{{ old('starts_at', $item->starts_at?->format('Y-m-d\TH:i')) }}"></label>
                 <label>Ends at (UTC) <input type="datetime-local" name="ends_at" value="{{ old('ends_at', $item->ends_at?->format('Y-m-d\TH:i')) }}"></label>
             @endif
@@ -91,6 +92,9 @@
         </div>
         <button class="save">Save changes</button>
     </form>
+    @if ($item->exists && in_array($section, ['products', 'categories'], true))
+        <p class="save"><a href="{{ route('cms.confirm-delete', [$section, $item->id]) }}">Delete {{ \Illuminate\Support\Str::singular($section) }}</a></p>
+    @endif
 
     @if ($section === 'products' && $item->exists)
         <section class="panel save">

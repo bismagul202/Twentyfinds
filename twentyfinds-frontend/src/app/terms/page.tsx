@@ -21,7 +21,7 @@ export default function TermsPage() {
         sections={[
           {
             title: <StorefrontText id="terms.preview-use" fallback="Preview use" />,
-            body: <StorefrontText id="terms.products-prices-descriptions-and-availability-shown-here" fallback="You can browse the published 20ISH catalogue. Order placement is currently unavailable." />,
+            body: <StorefrontText id="terms.products-prices-descriptions-and-availability-shown-here" fallback="The order summary shows product prices and delivery charges before you place your order." />,
           },
           {
             title: <StorefrontText id="terms.prices-and-products" fallback="Prices and products" />,
@@ -29,7 +29,7 @@ export default function TermsPage() {
           },
           {
             title: <StorefrontText id="terms.accounts-and-checkout" fallback="Accounts and checkout" />,
-            body: <StorefrontText id="terms.account-creation-checkout-payment-processing-order-placement" fallback="Account creation, checkout, payment processing, order placement and delivery booking are not available." />,
+            body: <StorefrontText id="terms.account-creation-checkout-payment-processing-order-placement" fallback="You can place an order as a guest using the payment methods shown at checkout." />,
           },
           {
             title: <StorefrontText id="terms.final-terms" fallback="Final terms" />,

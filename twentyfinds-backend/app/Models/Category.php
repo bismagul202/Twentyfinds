@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'name',
     'slug',
     'description',
+    'meta_title',
+    'meta_description',
     'image_path',
     'status',
     'sort_order',

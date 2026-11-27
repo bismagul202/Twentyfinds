@@ -12,7 +12,7 @@ class StorefrontCopyController extends Controller
 {
     public function edit(Request $request): View
     {
-        $definitions = $this->definitions();
+        $definitions = self::definitions();
         $groups = array_values(array_unique(array_map(fn (string $key): string => explode('.', $key, 2)[0], array_keys($definitions))));
         $selected = $request->string('group')->toString() ?: 'homepage';
         abort_unless(in_array($selected, $groups, true), 404);
@@ -24,7 +24,7 @@ class StorefrontCopyController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        $definitions = $this->definitions();
+        $definitions = self::definitions();
         $data = $request->validate([
             'group' => ['required', 'string', 'max:100'],
             'copy' => ['required', 'array'],
@@ -43,6 +43,10 @@ class StorefrontCopyController extends Controller
                 continue;
             }
 
+            if ($key === 'contact.whatsapp-number' && ! preg_match('/^[1-9][0-9]{7,14}$/D', $value)) {
+                throw ValidationException::withMessages(['copy' => 'Enter the WhatsApp number with country code and digits only.']);
+            }
+
             preg_match_all('/\{[a-zA-Z][a-zA-Z0-9_]*\}/', $definitions[$key], $expected);
             preg_match_all('/\{[a-zA-Z][a-zA-Z0-9_]*\}/', $value, $received);
             if (array_diff($expected[0], $received[0]) || array_diff($received[0], $expected[0])) {
@@ -57,10 +61,10 @@ class StorefrontCopyController extends Controller
             DB::table('storefront_copy')->upsert($updates, ['key'], ['value']);
         });
 
-        return to_route('cms.copy', ['group' => $data['group']])->with('notice', 'Storefront text published.');
+        return to_route('cms.copy', ['group' => $data['group']])->with('notice', '20ISH content published.');
     }
 
-    private function definitions(): array
+    public static function definitions(): array
     {
         return json_decode(file_get_contents(resource_path('storefront-copy.json')), true, flags: JSON_THROW_ON_ERROR);
     }

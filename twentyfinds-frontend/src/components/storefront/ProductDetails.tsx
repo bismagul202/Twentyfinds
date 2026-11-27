@@ -111,7 +111,6 @@ export function ProductDetails({ product }: { product: StoreProduct }) {
             </button>
           </div>
           <span className="sr-only" role="status">{added && <StorefrontText id="product.added-to-your-bag" fallback="Added to your bag" />}</span>
-          <p className="preview-disclaimer"><StorefrontText id="product.store-preview-only-checkout-and-order-placement" fallback="Checkout and order placement are currently unavailable on 20ISH." /></p>
           <ProductInformation description={product.description} category={category} variant={variant?.name} />
         </div>
       </div>

@@ -1,7 +1,7 @@
 @extends('cms.layout')
 @section('title', 'Contact inbox')
 @section('content')
-    <header class="dashboard-heading"><div><h1>Contact inbox</h1><p class="muted">Messages from the storefront contact form.</p></div></header>
+    <header class="dashboard-heading"><div><h1>Contact inbox</h1><p>Messages sent through the 20ISH contact form.</p></div></header>
     <section class="panel scroll">
         <table>
             <thead><tr><th scope="col">Sender</th><th scope="col">Topic</th><th scope="col">Received</th></tr></thead>

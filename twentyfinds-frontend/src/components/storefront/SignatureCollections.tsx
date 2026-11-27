@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { departmentGroups } from "@/features/storefront/navigation";
 import { StorefrontText } from "@/features/storefront/StorefrontCopy";
+import { bannerImage, type CmsBanner } from "@/features/storefront/cms";
 import { Icon } from "./Icon";
 import { ImageCanvas } from "./ImageCanvas";
 
@@ -39,7 +40,7 @@ const occasions = [
 
 const gifting = departmentGroups.find(({ id }) => id === "gifting")?.items ?? [];
 
-export function SignatureCollections({ categorySlugs }: { categorySlugs: string[] }) {
+export function SignatureCollections({ categorySlugs, banners }: { categorySlugs: string[]; banners: CmsBanner[] }) {
   const categories = new Set(categorySlugs);
 
   function collectionHref(id: string, fallback: string) {
@@ -56,7 +57,7 @@ export function SignatureCollections({ categorySlugs }: { categorySlugs: string[
       <div className="signature-studios">
         {studios.map(({ id, title, description, linkText, image }) => (
           <article className="signature-studio" key={id}>
-            <ImageCanvas src={image} className="signature-studio-image" alt="" sizes="(max-width: 760px) 38vw, 400px" />
+            <ImageCanvas src={bannerImage(banners, `studio-${id}`, image)} className="signature-studio-image" alt="" sizes="(max-width: 760px) 38vw, 400px" />
             <div className="signature-studio-copy">
               <h3><StorefrontText id={`homepage.signature-${id}-title`} fallback={title} /></h3>
               <p><StorefrontText id={`homepage.signature-${id}-description`} fallback={description} /></p>
@@ -97,7 +98,7 @@ export function SignatureCollections({ categorySlugs }: { categorySlugs: string[
               <Icon name="arrow-right" size={17} />
             </Link>
           </div>
-          <ImageCanvas src="/twentyfinds-hero-wide.webp" alt="" className="everyday-edit-image" />
+          <ImageCanvas src={bannerImage(banners, "budget-10", "/twentyfinds-hero-wide.webp")} alt="" className="everyday-edit-image" />
         </section>
         <section className="signature-story" aria-labelledby="signature-story-title">
           <h3 id="signature-story-title"><StorefrontText id="homepage.family-made-title" fallback="The family behind 20ISH" /></h3>

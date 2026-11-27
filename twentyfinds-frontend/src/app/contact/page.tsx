@@ -1,14 +1,14 @@
 import { StorefrontText } from "@/features/storefront/StorefrontCopy";
-import { managedMetadata } from "@/features/storefront/cms";
+import { bannerImage, getStorefront, managedMetadata } from "@/features/storefront/cms";
 import { Suspense } from "react";
-import { getCmsPage } from "@/features/storefront/cms";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ContactForm } from "@/components/storefront/ContactForm";
 import { Icon, type IconName } from "@/components/storefront/Icon";
 import { ImageCanvas } from "@/components/storefront/ImageCanvas";
 import { RouteSkeleton } from "@/components/storefront/RouteSkeleton";
-import { storefrontContact } from "@/features/storefront/brand";
+import { whatsappHref } from "@/features/storefront/brand";
+import { getSupportGuide } from "@/features/storefront/support-guides";
 import "./contact.css";
 
 const helpLinks: { href: string; id: string; label: string; icon: IconName }[] = [
@@ -24,16 +24,20 @@ export function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default function ContactPage() {
-  return <Suspense fallback={<RouteSkeleton />}><ContactContent /></Suspense>;
+type ContactSearchParams = Promise<{ collection?: string | string[] }>;
+
+export default function ContactPage({ searchParams }: { searchParams: ContactSearchParams }) {
+  return <Suspense fallback={<RouteSkeleton />}><ContactContent searchParams={searchParams} /></Suspense>;
 }
 
-async function ContactContent() {
-  const page = await getCmsPage("contact");
+async function ContactContent({ searchParams }: { searchParams: ContactSearchParams }) {
+  const [{ banners, pages, copy }, { collection }] = await Promise.all([getStorefront(), searchParams]);
+  const page = pages.find(({ slug }) => slug === "contact");
+  const guide = typeof collection === "string" ? getSupportGuide(collection) : undefined;
   return (
     <article className="contact-editorial">
       <header className="contact-hero">
-        <ImageCanvas src="/20ish-contact-editorial.webp" className="contact-hero-image" alt="" sizes="100vw" />
+        <ImageCanvas src={bannerImage(banners, "contact", "/20ish-contact-editorial.webp")} className="contact-hero-image" alt="" sizes="100vw" />
         <div className="contact-hero-inner container-shell">
           <nav className="content-page-topline" aria-label="Breadcrumb">
             <Link href="/"><StorefrontText id="contact.home" fallback="Home" /></Link>
@@ -50,12 +54,12 @@ async function ContactContent() {
       <div className="contact-content container-shell">
         <section className="contact-message" aria-labelledby="contact-message-title">
           <h2 id="contact-message-title"><StorefrontText id="contact.drop-us-a-note" fallback="Send us a message" /></h2>
-          <ContactForm />
+          <ContactForm key={guide?.slug ?? "general"} collection={guide?.title} />
         </section>
         <aside className="contact-help" aria-labelledby="contact-help-title">
           <h2 id="contact-help-title"><StorefrontText id="contact.help-heading" fallback="Useful information" /></h2>
           <div className="contact-direct">
-            <a className="contact-whatsapp" href={storefrontContact.whatsappHref}>
+            <a className="contact-whatsapp" href={whatsappHref(copy)}>
               <Icon name="whatsapp" size={23} />
               <StorefrontText id="contact.whatsapp" fallback="Chat on WhatsApp" />
               <Icon name="arrow-right" size={16} />

@@ -6,6 +6,7 @@ import {
   useContext,
   useMemo,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -16,26 +17,85 @@ type StorefrontContextValue = {
   wishlistCount: number;
   addToCart: (productSlug: string, quantity?: number) => void;
   setCartQuantity: (key: string, quantity: number) => void;
+  removePurchased: (purchased: Record<string, number>) => void;
   toggleWishlist: (productSlug: string) => void;
   isWishlisted: (productSlug: string) => boolean;
 };
 
 const StorefrontContext = createContext<StorefrontContextValue | null>(null);
 
+const cartStorageKey = "20ish.cart";
+const emptyCart: Record<string, number> = {};
+let cartSnapshot = emptyCart;
+let cartJson: string | null = null;
+
+function getCartSnapshot() {
+  try {
+    const json = window.localStorage.getItem(cartStorageKey);
+    if (json === cartJson) return cartSnapshot;
+    cartJson = json;
+    const stored: unknown = JSON.parse(json ?? "{}");
+    cartSnapshot = stored && typeof stored === "object" && !Array.isArray(stored)
+      ? Object.fromEntries(Object.entries(stored).filter(([key, quantity]) =>
+        /^[a-z0-9-]+(?::[1-9]\d*)?$/.test(key) && Number.isInteger(quantity) && quantity > 0 && quantity <= 99))
+      : emptyCart;
+  } catch {
+    // Keep the in-memory bag available if browser storage is blocked.
+  }
+  return cartSnapshot;
+}
+
+function subscribeToCart(notify: () => void) {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === cartStorageKey || event.key === null) notify();
+  };
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(cartStorageKey, notify);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(cartStorageKey, notify);
+  };
+}
+
+function updateCart(update: (current: Record<string, number>) => Record<string, number>) {
+  const current = getCartSnapshot();
+  const next = update(current);
+  if (next === current) return;
+  cartSnapshot = next;
+  try {
+    const json = JSON.stringify(next);
+    window.localStorage.setItem(cartStorageKey, json);
+    cartJson = json;
+  } catch {
+    // The bag can still be used for the current page session.
+  }
+  window.dispatchEvent(new Event(cartStorageKey));
+}
+
+function removePurchased(purchased: Record<string, number>) {
+  updateCart((current) => {
+    const next = { ...current };
+    for (const [key, quantity] of Object.entries(purchased)) {
+      if (current[key] === quantity) delete next[key];
+    }
+    return next;
+  });
+}
+
 export function StorefrontProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<Record<string, number>>({});
+  const cart = useSyncExternalStore(subscribeToCart, getCartSnapshot, () => emptyCart);
   const [wishlist, setWishlist] = useState<string[]>([]);
 
   const addToCart = useCallback((productSlug: string, quantity = 1) => {
-    setCart((current) => ({
+    updateCart((current) => ({
       ...current,
-      [productSlug]: (current[productSlug] ?? 0) + quantity,
+      [productSlug]: Math.min(99, (current[productSlug] ?? 0) + quantity),
     }));
   }, []);
 
   const setCartQuantity = useCallback((key: string, quantity: number) => {
-    if (!Number.isSafeInteger(quantity) || quantity < 0) return;
-    setCart((current) => {
+    if (!Number.isSafeInteger(quantity) || quantity < 0 || quantity > 99) return;
+    updateCart((current) => {
       if (!Object.hasOwn(current, key) || current[key] === quantity) return current;
       const next = { ...current };
       if (quantity === 0) delete next[key];
@@ -65,6 +125,7 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
       wishlistCount: wishlist.length,
       addToCart,
       setCartQuantity,
+      removePurchased,
       toggleWishlist,
       isWishlisted,
     }),

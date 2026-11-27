@@ -10,7 +10,7 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Open <http://localhost:3000>. Set `NEXT_PUBLIC_API_URL` in `.env.local` to the Laravel API base URL (including `/api`). Set the server-side `STOREFRONT_CMS_URL` to the Laravel API base URL to display published dashboard content. Omitting this setting uses the local demo catalog.
+Open <http://localhost:3000>. Set the server-only `LARAVEL_ORIGIN` in `.env.local` to the Laravel origin without `/api`. Next.js reads published CMS content from Laravel and proxies same-domain requests for `/api`, `/admin` and CMS assets. The default Laravel origin is `http://localhost:8000`.
 
 ## Structure
 

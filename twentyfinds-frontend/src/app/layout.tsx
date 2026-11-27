@@ -1,8 +1,8 @@
 import { formatStorefrontCopy } from "@/features/storefront/copy-text";
-import { storefrontBrand, storefrontContact } from "@/features/storefront/brand";
+import { storefrontBrand, whatsappHref } from "@/features/storefront/brand";
 import { Suspense } from "react";
 import { StorefrontCopyProvider } from "@/features/storefront/StorefrontCopy";
-import { getStorefront } from "@/features/storefront/cms";
+import { bannerImage, getStorefront } from "@/features/storefront/cms";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { SiteFooter } from "@/components/storefront/SiteFooter";
@@ -32,22 +32,24 @@ export async function generateMetadata(): Promise<Metadata> {
 
 async function StorefrontShell({ children }: { children: React.ReactNode }) {
   const storefront = await getStorefront().catch(() => null);
-  const { categories = [], pages = [], copy = {}, products = [], previewCatalog } = storefront ?? {};
+  const { categories = [], pages = [], copy = {}, products = [], banners = [], previewCatalog } = storefront ?? {};
   const announcement = pages.find((page) => page.slug === "site-announcement");
+  const logo = bannerImage(banners, "site-logo", "/logo-transparent.webp");
 
   return (
     <StorefrontCopyProvider copy={copy ?? {}}>
       <StorefrontProvider>
         <SiteHeader
           announcement={announcement}
+          logo={logo}
           categories={categories.map(({ name, slug }) => ({ name, slug }))}
           shoppingProducts={previewCatalog ? [] : products.map(({ slug, name, image, price, variants }) => ({
             slug, name, image, price, variants,
           }))}
         />
         <main id="main-content" className="site-main" tabIndex={-1}>{children}</main>
-        <SiteFooter pages={pages} categories={categories} copy={copy} />
-        <a className="whatsapp-float" href={storefrontContact.whatsappHref}
+        <SiteFooter pages={pages} categories={categories} copy={copy} logo={logo} />
+        <a className="whatsapp-float" href={whatsappHref(copy)}
           aria-label={formatStorefrontCopy(copy, "contact.whatsapp-floating", "Chat with 20ISH on WhatsApp")}
           target="_blank" rel="noopener noreferrer">
           <Icon name="whatsapp" size={30} />

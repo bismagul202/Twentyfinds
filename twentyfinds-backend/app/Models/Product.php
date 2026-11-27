@@ -17,11 +17,14 @@ use Illuminate\Support\Facades\Validator;
     'slug',
     'sku',
     'description',
+    'meta_title',
+    'meta_description',
     'short_description',
     'purchase_cost',
     'selling_price',
     'compare_at_price',
     'is_featured',
+    'is_new_arrival',
     'is_bestseller',
     'status',
 ])]
@@ -46,6 +49,7 @@ class Product extends Model
             'selling_price' => 'decimal:2',
             'compare_at_price' => 'decimal:2',
             'is_featured' => 'boolean',
+            'is_new_arrival' => 'boolean',
             'is_bestseller' => 'boolean',
         ];
     }

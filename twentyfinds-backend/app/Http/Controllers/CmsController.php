@@ -4,16 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Banner;
 use App\Models\Category;
+use App\Models\Order;
 use App\Models\Page;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -24,12 +27,25 @@ class CmsController extends Controller
 {
     public const BANNER_PLACEMENTS = [
         'homepage' => 'Homepage hero',
+        'site-logo' => 'Website logo',
         'promotion' => 'Promotion',
         'seasonal' => 'Seasonal edit',
         'seasonal-secondary' => 'Seasonal secondary image',
         'budget-5' => 'Under GBP 5 tile',
         'budget-10' => 'Under GBP 10 tile',
         'budget-20' => 'Under GBP 20 tile',
+        'shop' => 'Shop All hero',
+        'new-in' => 'New In hero',
+        'about' => 'About hero',
+        'about-fashion' => 'About fashion image',
+        'about-stationery' => 'About stationery image',
+        'contact' => 'Contact hero',
+        'studio-handmade' => 'Homepage Handmade Studio',
+        'studio-personalise' => 'Homepage Personalisation Studio',
+        'studio-wedding-nikah' => 'Homepage Wedding & Nikah',
+        'our-handmade-story' => 'Handmade story hero',
+        'personalisation' => 'Personalisation guide hero',
+        'wedding-nikah' => 'Wedding & Nikah guide hero',
     ];
 
     public const SECTIONS = [
@@ -47,6 +63,14 @@ class CmsController extends Controller
 
         Gate::authorize('manage-cms');
 
+        return view('cms.dashboard', [
+            'sections' => array_keys(self::SECTIONS),
+            'recentOrders' => Order::query()->latest('id')->limit(5)->get(),
+        ]);
+    }
+
+    public function overview(): JsonResponse
+    {
         $sections = collect(self::SECTIONS)->map(function (string $model, string $section): array {
             $published = $section === 'pages' ? 'published' : 'active';
             $counts = $model::query()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
@@ -65,14 +89,17 @@ class CmsController extends Controller
                 ->get(['id', $label, 'status', 'updated_at'])
                 ->map(fn (Model $item): array => [
                     'section' => $section,
-                    'id' => $item->getKey(),
+                    'href' => route('cms.edit', [$section, $item->getKey()], absolute: false),
                     'title' => $item->$label,
                     'status' => $item->status,
                     'updated' => $item->updated_at,
                 ]);
-        })->sortByDesc('updated')->take(6);
+        })->sortByDesc('updated')->take(6)->values()->map(fn (array $item): array => [
+            ...$item,
+            'updated' => $item['updated']?->diffForHumans(),
+        ]);
 
-        return view('cms.dashboard', compact('sections', 'recent'));
+        return response()->json(compact('sections', 'recent'))->header('Cache-Control', 'private, no-store');
     }
 
     public function index(Request $request, string $section = 'products'): View
@@ -80,6 +107,9 @@ class CmsController extends Controller
         $search = $request->string('q')->trim()->limit(100)->toString();
         $title = in_array($section, ['products', 'categories'], true) ? 'name' : 'title';
         $items = $this->model($section)->newQuery()
+            ->when($section === 'products', fn ($query) => $query->with([
+                'images' => fn ($images) => $images->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id')->limit(1),
+            ]))
             ->when($search !== '', fn ($query) => $query->whereLike($title, '%'.$search.'%'))
             ->latest('id')->paginate(25)->withQueryString();
 
@@ -112,6 +142,10 @@ class CmsController extends Controller
         try {
             DB::transaction(function () use ($request, $item, $data, &$uploads): void {
                 $data = collect($data)->except(['image', 'images'])->all();
+                $categoryField = $item instanceof Product ? 'category_id' : 'parent_id';
+                if (isset($data[$categoryField]) && ! Category::query()->lockForUpdate()->find($data[$categoryField])) {
+                    throw ValidationException::withMessages([$categoryField => 'This category is no longer available.']);
+                }
                 if ($item instanceof Category) {
                     $this->validateParent($item, $data['parent_id'] ?? null);
                 }
@@ -142,6 +176,77 @@ class CmsController extends Controller
         }
 
         return to_route('cms.edit', [$section, $item->getKey()])->with('notice', 'Changes saved.');
+    }
+
+    public function confirmDelete(string $section, int $id): View
+    {
+        $item = $this->item($section, $id);
+
+        return view('cms.delete', compact('section', 'item'));
+    }
+
+    public function duplicate(string $section, int $id): RedirectResponse
+    {
+        $copy = DB::transaction(function () use ($section, $id): Model {
+            $item = $this->model($section)->newQuery()->lockForUpdate()->findOrFail($id);
+            $suffix = '-copy-'.Str::lower(Str::random(10));
+            $copy = $item->replicate();
+            $copy->name = Str::limit($item->name, 248, '').' (copy)';
+            $copy->slug = rtrim(Str::limit($item->slug, 255 - strlen($suffix), ''), '-').$suffix;
+            $copy->status = 'draft';
+            if ($copy instanceof Product) {
+                $copy->sku = Str::limit($item->sku, 255 - strlen($suffix), '').$suffix;
+            }
+            $copy->save();
+
+            if ($item instanceof Product) {
+                foreach ($item->images as $image) {
+                    $copy->images()->save($image->replicate());
+                }
+                foreach ($item->variants as $variant) {
+                    $variantCopy = $variant->replicate();
+                    $variantCopy->sku = Str::limit($variant->sku, 245, '').'-'.Str::lower(Str::random(9));
+                    $copy->variants()->save($variantCopy);
+                }
+            }
+
+            return $copy;
+        });
+
+        return to_route('cms.edit', [$section, $copy->id])->with('notice', 'Draft copy created.');
+    }
+
+    public function seo(string $section, int $id): View
+    {
+        $item = $this->item($section, $id);
+
+        return view('cms.seo', compact('section', 'item'));
+    }
+
+    public function saveSeo(Request $request, string $section, int $id): RedirectResponse
+    {
+        $data = $request->validate([
+            'meta_title' => ['nullable', 'string', 'max:150'],
+            'meta_description' => ['nullable', 'string', 'max:255'],
+        ]);
+        $this->item($section, $id)->update($data);
+
+        return to_route('cms.seo', [$section, $id])->with('notice', 'SEO settings saved.');
+    }
+
+    public function destroy(string $section, int $id): RedirectResponse
+    {
+        DB::transaction(function () use ($section, $id): void {
+            $item = $this->model($section)->newQuery()->lockForUpdate()->findOrFail($id);
+            if ($item instanceof Category && ($item->children()->exists() || $item->products()->exists())) {
+                throw ValidationException::withMessages([
+                    'category' => 'Move or delete this category’s products and subcategories before deleting it.',
+                ])->redirectTo(route('cms.confirm-delete', [$section, $id]));
+            }
+            $item->delete();
+        });
+
+        return to_route('cms.section', $section)->with('notice', 'Item deleted.');
     }
 
     public function image(Product $product, int $image, string $action): RedirectResponse
@@ -223,6 +328,7 @@ class CmsController extends Controller
                 'selling_price' => ['required', 'numeric', 'decimal:0,2', 'between:0.01,19.99'],
                 'compare_at_price' => ['nullable', 'numeric', 'decimal:0,2', 'gt:selling_price', 'max:99999999.99'],
                 'is_featured' => ['sometimes', 'boolean'],
+                'is_new_arrival' => ['sometimes', 'boolean'],
                 'is_bestseller' => ['sometimes', 'boolean'],
                 'images' => ['sometimes', 'bail', 'array', 'max:8', function (string $attribute, array $files, \Closure $fail): void {
                     $total = collect($files)->sum(fn ($file): int => $file instanceof UploadedFile ? (int) $file->getSize() : 0);
@@ -286,6 +392,10 @@ class CmsController extends Controller
     {
         if (! $path) {
             return '';
+        }
+
+        if (preg_match('~^storefront/([a-z0-9-]+\.webp)$~', $path, $match)) {
+            return '/'.$match[1];
         }
 
         if (preg_match('~^cms/([A-Za-z0-9]{40}\.(?:jpe?g|png|webp))$~i', $path, $match)) {

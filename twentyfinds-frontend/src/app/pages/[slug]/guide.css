@@ -1,0 +1,105 @@
+.collection-guide {
+  --guide-surface: var(--burgundy);
+  --guide-ink: var(--ivory);
+  --guide-muted: var(--blush);
+  --guide-focus: var(--focus-ring-inverse);
+}
+.collection-guide--personalisation {
+  --guide-surface: var(--blush);
+  --guide-ink: var(--burgundy);
+  --guide-muted: var(--maroon);
+  --guide-focus: var(--focus-ring);
+}
+.collection-guide--wedding-nikah { --guide-surface: #351019; }
+.collection-guide-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr);
+  min-height: clamp(390px, 38vw, 570px);
+  background: var(--guide-surface);
+  color: var(--guide-ink);
+}
+.collection-guide-intro {
+  align-self: center;
+  padding: clamp(24px, 5vw, 84px);
+  overflow-wrap: anywhere;
+}
+.collection-guide-intro .content-page-topline { margin: 0 0 var(--space-5); color: var(--guide-muted); }
+.collection-guide-intro .content-page-topline a,
+.collection-guide-actions .text-link { color: var(--guide-ink); }
+.collection-guide-intro a:focus-visible { outline-color: var(--guide-focus); }
+.collection-guide-intro h1 {
+  margin: 0 0 var(--space-3);
+  font: 400 clamp(42px, 6.3vw, 86px)/.99 var(--display-face);
+  letter-spacing: -.05em;
+  text-wrap: balance;
+}
+.collection-guide-intro p { max-width: 47ch; margin: 0; font-size: clamp(15px, 1.8vw, 19px); line-height: 1.65; }
+.collection-guide-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); margin-block-start: var(--space-5); }
+.collection-guide-actions .button { margin: 0; }
+.collection-guide-actions .text-link { min-height: 40px; text-decoration: underline; text-underline-offset: 4px; }
+.collection-guide-hero-image { min-height: 230px; }
+.collection-guide--our-handmade-story .collection-guide-hero-image img { object-position: center 54%; }
+
+.collection-guide-shop { padding-block-start: var(--space-5); border-bottom: var(--card-border); }
+.collection-guide-filters { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.collection-guide-filters a {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--card-border);
+  border-radius: 999px;
+  color: var(--burgundy);
+  font-size: 14px;
+}
+.collection-guide-filters a:hover { background: var(--blush); }
+.collection-guide-filters svg { flex: none; }
+.collection-guide-shop .empty-state { min-height: 160px; border: var(--card-border); border-radius: var(--card-radius); }
+.collection-guide-shop .empty-state-mark { display: none; }
+.collection-guide-shop .empty-state a { color: var(--maroon); text-decoration: underline; text-underline-offset: 4px; }
+
+.collection-guide-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  column-gap: clamp(24px, 7vw, 98px);
+  align-items: start;
+  padding-block: clamp(28px, 5vw, 64px) clamp(44px, 7vw, 85px);
+}
+.collection-guide-topic,
+.collection-guide-body > .cms-page-copy { grid-column: 1; }
+.collection-guide-topic { padding-block: var(--space-5); border-bottom: var(--card-border); }
+.collection-guide-topic:first-child { padding-block-start: 0; }
+.collection-guide-body h2 {
+  margin: 0 0 var(--space-3);
+  color: var(--burgundy);
+  font: 400 clamp(24px, 3.4vw, 38px)/1.15 var(--display-face);
+  letter-spacing: -.035em;
+}
+.collection-guide-body p { margin: 0; color: var(--muted); line-height: 1.7; overflow-wrap: anywhere; }
+.collection-guide-related {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  border-top: 2px solid var(--maroon);
+  padding-block-start: var(--space-3);
+}
+.collection-guide-related h2 { font-size: clamp(22px, 2.6vw, 32px); }
+.collection-guide-related a {
+  display: flex;
+  justify-content: space-between;
+  min-height: 50px;
+  padding-block: var(--space-2);
+  border-bottom: var(--card-border);
+  color: var(--maroon);
+  font-size: 14px;
+}
+.collection-guide-related a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.collection-guide-actions svg,
+.collection-guide-related svg { flex: none; }
+
+@media (max-width: 720px) {
+  .collection-guide-hero,
+  .collection-guide-body { grid-template-columns: minmax(0, 1fr); }
+  .collection-guide-hero-image { min-height: clamp(195px, 60vw, 340px); }
+  .collection-guide-related { grid-column: 1; grid-row: auto; margin-block-start: var(--space-5); }
+}

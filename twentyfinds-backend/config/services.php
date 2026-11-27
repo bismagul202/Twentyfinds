@@ -14,6 +14,16 @@ return [
     |
     */
 
+    'checkout' => [
+        'delivery_pence' => (int) env('CHECKOUT_DELIVERY_PENCE', 399),
+    ],
+
+    'stripe' => [
+        'enabled' => env('STRIPE_CHECKOUT_ENABLED', false),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

@@ -6,9 +6,7 @@ export const storefrontBrand = {
   locale: "en-GB",
 } as const;
 
-const contactNumber = "+92 334 6432767";
-const contactDigits = contactNumber.replace(/\D/g, "");
-
-export const storefrontContact = {
-  whatsappHref: `https://wa.me/${contactDigits}`,
-};
+export function whatsappHref(copy: Record<string, string>) {
+  const number = copy["contact.whatsapp-number"];
+  return `https://wa.me/${number && /^[1-9][0-9]{7,14}$/.test(number) ? number : "923346432767"}`;
+}

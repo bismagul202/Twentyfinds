@@ -13,8 +13,8 @@ export function generateMetadata(): Promise<Metadata> {
 
 const questions = [
   { id: 1, question: "What is 20ISH?", answer: "We're creating a UK-focused multi-category online store for fashion, home, beauty, gadgets, toys and more — with every product priced under £20." },
-  { id: 2, question: "Can I place an order?", answer: "You can browse 20ISH. Checkout, payments and order placement are currently unavailable." },
-  { id: 3, question: "Where do you deliver?", answer: "Delivery areas, shipping services and timings are still being confirmed. We'll publish the final details before the store opens." },
+  { id: 2, question: "Can I place an order?", answer: "Add items to your bag and check out as a guest. Available payment methods are shown at checkout." },
+  { id: 3, question: "Where do you deliver?", answer: "Checkout accepts UK delivery addresses and shows the flat delivery charge before you place your order." },
   { id: 4, question: "Where can I see product prices and options?", answer: "Published product pages show prices in GBP and list any available options." },
   { id: 5, question: "How do returns work?", answer: "Our returns page is currently draft content. A confirmed returns process will be published before orders are accepted." },
   { id: 6, question: "How can I get in touch?", answer: "Send your question through the contact page. The 20ISH team can review your message." },

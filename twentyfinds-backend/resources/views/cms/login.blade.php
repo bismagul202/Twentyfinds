@@ -2,9 +2,9 @@
 @section('title', 'Owner sign in')
 @section('content')
     <section class="panel login">
-        <div class="login-brand"><span class="brand-emblem" aria-hidden="true">20</span> TWENTYFINDS</div>
+        <div class="login-brand"><img src="/logo-transparent.webp" width="56" height="56" alt=""> 20ISH</div>
         <h1>Owner sign in</h1>
-        <p class="muted">Manage the TWENTYFINDS storefront.</p>
+        <p class="muted">Manage the 20ISH shop, catalogue and website content.</p>
         <form method="post" action="{{ route('cms.login') }}">
             @csrf
             <p><label>Email <input type="email" name="email" value="{{ old('email') }}" required autocomplete="username"></label></p>

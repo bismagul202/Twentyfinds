@@ -6,6 +6,8 @@ export type StoreCategory = {
   tint: string;
   mark: string;
   parentSlug?: string;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
 };
 
 export type StoreProduct = {
@@ -14,6 +16,8 @@ export type StoreProduct = {
   categorySlug: string;
   price: number;
   compareAt?: number;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
   rating: number;
   reviewCount: number;
   categoryName?: string;

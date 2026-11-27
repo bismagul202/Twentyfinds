@@ -15,11 +15,12 @@ import { departmentGroups, informationLinks, moreLinks, newIn, shopAll } from "@
 
 type HeaderProps = {
   announcement?: CmsPage;
+  logo: string;
   categories: { name: string; slug: string }[];
   shoppingProducts: ShoppingPanelProduct[];
 };
 
-export function SiteHeader({ announcement, categories, shoppingProducts }: HeaderProps) {
+export function SiteHeader({ announcement, logo, categories, shoppingProducts }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const copy = useStorefrontCopy();
@@ -81,6 +82,7 @@ export function SiteHeader({ announcement, categories, shoppingProducts }: Heade
   }
 
   const categorySlugs = new Set(categories.map(({ slug }) => slug));
+  const categoryBySlug = new Map(categories.map((category) => [category.slug, category]));
   const featuredSlugs = new Set(departmentGroups.flatMap(({ items }) =>
     items.map(({ slugs }) => slugs?.find((slug) => categorySlugs.has(slug))),
   ));
@@ -97,7 +99,7 @@ export function SiteHeader({ announcement, categories, shoppingProducts }: Heade
             if (menu) menu.open = false;
             closeMenus();
           }}>
-          <StorefrontText id={`header.${id}`} fallback={label} />{icon && arrow}
+          {id.startsWith("category-") ? label : <StorefrontText id={`header.${id}`} fallback={label} />}{icon && arrow}
         </Link>
       );
     }
@@ -123,15 +125,20 @@ export function SiteHeader({ announcement, categories, shoppingProducts }: Heade
             <Icon name="chevron-down" size={15} />
           </summary>
           <div className="header-category-links">
-            {departmentGroups.map(({ id, label, items }) => (
-              <div className="header-menu-group" key={id}>
+            {departmentGroups.map(({ id, label, items }) => {
+              const published = items.flatMap(({ slugs }) => {
+                const slug = slugs?.find((candidate) => categorySlugs.has(candidate));
+                const category = slug && categoryBySlug.get(slug);
+                return category ? [category] : [];
+              });
+              if (!published.length) return null;
+              return <div className="header-menu-group" key={id}>
                 <p><StorefrontText id={`header.menu-${id}`} fallback={label} /></p>
-                {items.map((item) => {
-                  const slug = item.slugs?.find((candidate) => categorySlugs.has(candidate));
-                  return navigationLink({ ...item, href: slug ? `/categories/${slug}` : item.href });
-                })}
-              </div>
-            ))}
+                {published.map(({ name, slug }) => navigationLink({
+                  id: `category-${slug}`, label: name, href: `/categories/${slug}`,
+                }))}
+              </div>;
+            })}
             <div className="header-menu-group">
               <p><StorefrontText id="header.menu-more" fallback="More from 20ISH" /></p>
               {otherCategories.map(({ name, slug }) => navigationLink({
@@ -174,7 +181,7 @@ export function SiteHeader({ announcement, categories, shoppingProducts }: Heade
         </button>
 
         <Link href="/" className="brand-lockup" aria-label={copy("header.twentyfinds-home", `${storefrontBrand.name} home`)}>
-          <BrandLogo copyId="header.twentyfinds" />
+          <BrandLogo copyId="header.twentyfinds" src={logo} />
         </Link>
 
         <nav className="primary-nav" aria-label={copy("header.main-navigation", "Main navigation")}>
@@ -314,7 +321,7 @@ export function SiteHeader({ announcement, categories, shoppingProducts }: Heade
         <div className="storefront-drawer-inner">
           <div className="storefront-drawer-header">
             <Link href="/" className="brand-lockup" onClick={closeMenus} aria-label={copy("header.twentyfinds-home", `${storefrontBrand.name} home`)}>
-              <BrandLogo copyId="header.twentyfinds" />
+              <BrandLogo copyId="header.twentyfinds" src={logo} />
             </Link>
             <button type="button" className="icon-button drawer-close" aria-label={copy("header.close-menu", "Close menu")} onClick={() => drawer.current?.close()}>
               <Icon name="close" size={22} />

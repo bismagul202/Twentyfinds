@@ -38,12 +38,17 @@ class StorefrontController extends Controller
         $pages = Page::query()->where('status', 'published')
             ->where('published_at', '<=', now())->orderBy('title')->get();
 
+        $copyOverrides = DB::table('storefront_copy')->pluck('value', 'key')->all();
+
         return response()->json([
-            'copy' => (object) DB::table('storefront_copy')->pluck('value', 'key')->all(),
+            'copy' => (object) array_replace(StorefrontCopyController::definitions(), $copyOverrides),
+            'copyOverrides' => array_keys($copyOverrides),
             'categories' => $visibleCategories->map(fn (Category $category): array => [
                 'slug' => $category->slug,
                 'name' => $category->name,
                 'description' => $category->description ?? '',
+                'metaTitle' => $category->meta_title,
+                'metaDescription' => $category->meta_description,
                 'image' => CmsController::imageUrl($category->image_path),
                 'tint' => 'peach',
                 'mark' => (string) $category->id,
@@ -58,13 +63,15 @@ class StorefrontController extends Controller
                 $collections = array_values(array_filter([
                     $product->is_featured ? 'trending' : null,
                     $product->is_bestseller ? 'bestseller' : null,
-                    $product->created_at?->gte(now()->subDays(30)) ? 'new' : null,
+                    $product->is_new_arrival ? 'new' : null,
                 ]));
 
                 return [
                     'slug' => $product->slug, 'name' => $product->name,
                     'categorySlug' => $category->slug, 'categoryName' => $category->name,
                     'description' => $product->description ?: ($product->short_description ?? ''),
+                    'metaTitle' => $product->meta_title,
+                    'metaDescription' => $product->meta_description,
                     'price' => (float) $product->selling_price,
                     ...($product->compare_at_price > $product->selling_price ? ['compareAt' => (float) $product->compare_at_price] : []),
                     'rating' => round((float) $product->approved_rating, 1),

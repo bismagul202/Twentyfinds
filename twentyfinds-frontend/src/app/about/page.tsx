@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { StorefrontText } from "@/features/storefront/StorefrontCopy";
-import { getCmsPage, managedMetadata } from "@/features/storefront/cms";
+import { bannerImage, getStorefront, managedMetadata } from "@/features/storefront/cms";
 import { supportGuides } from "@/features/storefront/support-guides";
 import { ImageCanvas } from "@/components/storefront/ImageCanvas";
 import { Icon } from "@/components/storefront/Icon";
@@ -28,7 +28,8 @@ export default function AboutPage() {
 }
 
 async function AboutContent() {
-  const page = await getCmsPage("about");
+  const { banners, pages } = await getStorefront();
+  const page = pages.find(({ slug }) => slug === "about");
   const title = page?.title ?? <StorefrontText id="about.good-things-should-feel-good" fallback="For the little things that mean more" />;
 
   return (
@@ -45,7 +46,7 @@ async function AboutContent() {
             <StorefrontText id="content.shop-all" fallback="Shop all" /><Icon name="arrow-right" size={17} />
           </Link>
         </div>
-        <ImageCanvas src="/20ish-about-everyday-edit.webp" alt="" className="about-hero-image" sizes="100vw" />
+        <ImageCanvas src={bannerImage(banners, "about", "/20ish-about-everyday-edit.webp")} alt="" className="about-hero-image" sizes="100vw" />
       </header>
 
       {!page && (
@@ -60,8 +61,8 @@ async function AboutContent() {
 
           <section className="about-edit" aria-labelledby="about-edit-title">
             <div className="about-edit-images">
-              <ImageCanvas src="/20ish-category-fashion.webp" alt="" className="about-edit-fashion" sizes="(max-width: 720px) 54vw, 400px" />
-              <ImageCanvas src="/20ish-category-stationery.webp" alt="" className="about-edit-stationery" sizes="(max-width: 720px) 34vw, 230px" />
+              <ImageCanvas src={bannerImage(banners, "about-fashion", "/20ish-category-fashion.webp")} alt="" className="about-edit-fashion" sizes="(max-width: 720px) 54vw, 400px" />
+              <ImageCanvas src={bannerImage(banners, "about-stationery", "/20ish-category-stationery.webp")} alt="" className="about-edit-stationery" sizes="(max-width: 720px) 34vw, 230px" />
             </div>
             <div className="about-edit-copy">
               <h2 id="about-edit-title"><StorefrontText id="about.a-whole-lot-of-everything" fallback="What are you in the mood for?" /></h2>
@@ -90,7 +91,7 @@ async function AboutContent() {
 
           <aside className="about-preview">
             <h2><StorefrontText id="about.still-getting-ready" fallback="Still getting ready" /></h2>
-            <p><StorefrontText id="about.twentyfinds-is-currently-a-storefront-preview-product" fallback="Browse the collections while we prepare the store for orders." />{" "}<StorefrontText id="about.this-is-a-demo-storefront-no-orders" fallback="Checkout is currently unavailable." /></p>
+            <p><StorefrontText id="about.twentyfinds-is-currently-a-storefront-preview-product" fallback="Browse the collections and add your favourites to your bag." />{" "}<StorefrontText id="about.this-is-a-demo-storefront-no-orders" fallback="You can check out as a guest." /></p>
           </aside>
         </div>
       )}

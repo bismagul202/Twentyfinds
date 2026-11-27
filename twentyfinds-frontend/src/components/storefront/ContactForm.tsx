@@ -5,7 +5,7 @@ import { apiUrlFor } from "@/lib/api";
 import { useRef, useState, type FormEvent } from "react";
 import { Icon } from "./Icon";
 
-export function ContactForm() {
+export function ContactForm({ collection }: { collection?: string }) {
   const copy = useStorefrontCopy();
   const submitting = useRef(false);
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "invalid" | "error">("idle");
@@ -62,14 +62,15 @@ export function ContactForm() {
           />
         </label>
       </div>
-      <label><StorefrontText id="contact.what-can-we-help-with" fallback="What can we help with?" /><select name="topic" defaultValue="general">
+      <label><StorefrontText id="contact.what-can-we-help-with" fallback="What can we help with?" /><select name="topic" defaultValue={collection ? "product" : "general"}>
           <option value="general"><StorefrontText id="contact.a-general-question" fallback="A general question" /></option>
           <option value="order"><StorefrontText id="contact.an-order-question" fallback="An order question" /></option>
           <option value="product"><StorefrontText id="contact.a-product-question" fallback="A product question" /></option>
           <option value="feedback"><StorefrontText id="contact.feedback-or-something-else" fallback="Feedback or something else" /></option>
         </select>
       </label>
-      <label><StorefrontText id="contact.your-message" fallback="Your message" /><textarea name="message" rows={6} minLength={5} maxLength={4000} required placeholder={copy("contact.write-your-message-here", "Write your message here...")} />
+      <label><StorefrontText id="contact.your-message" fallback="Your message" /><textarea name="message" rows={6} minLength={5} maxLength={4000} required placeholder={copy("contact.write-your-message-here", "Write your message here...")}
+        defaultValue={collection ? copy("contact.collection-enquiry-opening", "Hello 20ISH, I have a question about {collection}.\n\n", { collection }) : undefined} />
       </label>
       <div hidden aria-hidden="true"><input name="website" tabIndex={-1} autoComplete="off" /></div>
       <button type="submit" className="button button-dark" disabled={status === "sending"}>

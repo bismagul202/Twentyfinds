@@ -8,7 +8,6 @@ import { BrandLogo } from "./BrandLogo";
 import { NewsletterForm } from "./NewsletterForm";
 import { Icon } from "./Icon";
 import { supportGuides } from "@/features/storefront/support-guides";
-import { departmentGroups } from "@/features/storefront/navigation";
 
 const footerLinks = [
   { id: "explore", heading: "Explore", links: [
@@ -25,22 +24,20 @@ const footerLinks = [
   ] },
 ];
 
-export function SiteFooter({ pages, categories, copy }: { pages: CmsPage[]; categories: StoreCategory[]; copy: Record<string, string> }) {
+export function SiteFooter({ pages, categories, copy, logo }: { pages: CmsPage[]; categories: StoreCategory[]; copy: Record<string, string>; logo: string }) {
   const text = (id: string, fallback: string) => formatStorefrontCopy(copy, id, fallback);
   const reserved = new Set(["homepage", "site-announcement", "site-footer", "about", "contact", "faq", "shipping", "returns", "privacy", "terms"]);
   supportGuides.forEach(({ slug }) => reserved.add(slug));
   const footerCopy = pages.find((page) => page.slug === "site-footer");
-  const departments = categories.filter((category) => !category.parentSlug).slice(0, 6);
-  const categoryLinks = departments.length
-    ? departments.map(({ slug, name }) => ({ href: `/categories/${slug}`, label: name }))
-    : departmentGroups.flatMap(({ items }) => items).slice(0, 6).map(({ href, label }) => ({ href, label }));
+  const departments = categories.filter((category) => !category.parentSlug);
+  const categoryLinks = departments.map(({ slug, name }) => ({ href: `/categories/${slug}`, label: name }));
   const published = pages.filter((page) => !reserved.has(page.slug));
   return (
     <footer className="site-footer storefront-footer">
       <div className="footer-main container-shell">
         <div className="footer-brand">
           <Link href="/" className="brand-lockup" aria-label={text("footer.brand-home", `${storefrontBrand.name} home`)}>
-            <BrandLogo copyId="footer.twentyfinds" size={128} />
+            <BrandLogo copyId="footer.twentyfinds" size={128} src={logo} />
           </Link>
           <div className="footer-brand-copy">
             <p>{footerCopy?.title ?? <StorefrontText id="footer.everyday-finds-for-a-life-well-lived" fallback={storefrontBrand.secondaryTagline} />}</p>

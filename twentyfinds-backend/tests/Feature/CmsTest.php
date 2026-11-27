@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\StorefrontContentSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,7 @@ class CmsTest extends TestCase
         $this->get('/admin/products')->assertRedirect('/admin/login');
         $this->get('/admin/login')->assertRedirect('/admin');
         $this->get('/admin')->assertOk()->assertSee('Owner sign in');
+        $this->getJson('/admin/overview-data')->assertUnauthorized();
     }
 
     public function test_owner_uploads_and_publishes_storefront_content(): void
@@ -36,6 +38,7 @@ class CmsTest extends TestCase
             $suffix = Str::lower(Str::random(12));
             $customer = User::factory()->create();
             $this->actingAs($customer)->get('/admin')->assertForbidden();
+            $this->getJson('/admin/overview-data')->assertForbidden();
 
             $owner = User::factory()->create(['password' => 'Test-only-password-2026']);
             $owner->roles()->attach(Role::query()->firstOrCreate(['slug' => 'admin'], ['name' => 'Admin']));
@@ -45,7 +48,10 @@ class CmsTest extends TestCase
             $this->get('/admin/pages')->assertOk()->assertSee('/shop')->assertSee('/privacy')->assertSee('Edit wording');
             $this->get('/admin/pages/edit?preset=about')->assertOk()->assertSee('value="about"', false);
             $this->get('/admin')->assertOk()->assertViewIs('cms.dashboard')->assertSee('Quick actions');
-            $this->get('/admin/products/edit')->assertOk()->assertSee('Add product photos');
+            $this->getJson('/admin/overview-data')->assertOk()
+                ->assertJsonStructure(['sections' => ['products', 'categories', 'banners', 'pages'], 'recent']);
+            $this->get('/admin/products/edit')->assertOk()->assertSee('Add product photos')
+                ->assertSee('New Arrivals')->assertSee('Trending Finds');
 
             $this->get('/admin/storefront-copy?group=homepage')->assertOk()->assertSee('Good taste.');
             $this->post('/admin/storefront-copy', [
@@ -85,13 +91,37 @@ class CmsTest extends TestCase
             $this->get('/admin/products/edit/'.$record->id)->assertOk()->assertSee('Set primary');
             $this->getJson('/api/storefront')->assertJsonMissing(['slug' => $productSlug]);
 
+            $this->seed(StorefrontContentSeeder::class);
+            $imported = Category::withTrashed()->where('slug', 'home-living')->firstOrFail();
+            $imported->update(['name' => 'Home edit', 'status' => 'draft']);
+            $this->seed(StorefrontContentSeeder::class);
+            $this->assertDatabaseHas('categories', ['id' => $imported->id, 'name' => 'Home edit', 'status' => 'draft']);
+            $this->getJson('/api/storefront')->assertOk()
+                ->assertJsonMissing(['slug' => 'home-living'])
+                ->assertJsonFragment(['homepage.good-taste' => 'Good taste.']);
+
             $product['status'] = 'active';
             $this->post('/admin/products/edit/'.$record->id, $product)->assertSessionHasNoErrors();
+            $collections = fn (): array => collect($this->getJson('/api/storefront')->assertOk()->json('products'))
+                ->firstWhere('slug', $productSlug)['collections'];
+            $this->assertSame([], $collections());
+
+            $this->post('/admin/products/edit/'.$record->id, $product + ['is_new_arrival' => 1, 'is_featured' => 0])
+                ->assertSessionHasNoErrors();
+            $this->assertSame(['new'], $collections());
+
+            $this->post('/admin/products/edit/'.$record->id, $product + ['is_new_arrival' => 0, 'is_featured' => 1])
+                ->assertSessionHasNoErrors();
+            $this->assertSame(['trending'], $collections());
+
             $this->post('/admin/products/'.$record->id.'/variants', [
                 'variant_name' => 'Burgundy', 'variant_sku' => 'VAR-'.$suffix,
                 'variant_price' => '13.50', 'variant_active' => 1, 'variant_default' => 1,
             ])->assertSessionHasNoErrors()->assertRedirect();
-            $this->get('/admin')->assertOk()->assertSee('CMS find');
+            $this->getJson('/admin/overview-data')->assertOk()->assertJsonFragment([
+                'title' => 'CMS find',
+                'href' => '/admin/products/edit/'.$record->id,
+            ]);
             $image = $record->images()->sole();
             Storage::disk('public')->assertExists($image->image_path);
             $this->get('/api/media/'.basename($image->image_path))->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
@@ -124,6 +154,42 @@ class CmsTest extends TestCase
             $category->update(['status' => 'draft']);
             $this->get('/admin/pages?q='.$productSlug.'&status=Hidden')->assertOk()->assertSee('/products/'.$productSlug);
             $this->getJson('/api/storefront')->assertJsonMissing(['slug' => $productSlug]);
+
+            $category->update(['status' => 'active']);
+            $this->get('/admin/products?q='.urlencode($record->name))->assertOk()
+                ->assertSee('Actions for '.$record->name)->assertSee('Duplicate')->assertSee('SEO')->assertSee('Delete '.$record->name);
+            $this->get('/admin/products/'.$record->id.'/seo')->assertOk()->assertSee('Search title');
+            $this->patch('/admin/products/'.$record->id.'/seo', [
+                'meta_title' => 'Product search title', 'meta_description' => 'Product search description',
+            ])->assertSessionHasNoErrors()->assertRedirect();
+            $this->patch('/admin/categories/'.$category->id.'/seo', [
+                'meta_title' => 'Category search title', 'meta_description' => 'Category search description',
+            ])->assertSessionHasNoErrors()->assertRedirect();
+            $this->getJson('/api/storefront')->assertOk()
+                ->assertJsonFragment(['slug' => $productSlug, 'metaTitle' => 'Product search title'])
+                ->assertJsonFragment(['slug' => $categorySlug, 'metaDescription' => 'Category search description']);
+
+            $this->post('/admin/products/'.$record->id.'/duplicate')->assertRedirect();
+            $copy = $category->products()->where('slug', 'like', $productSlug.'-copy-%')->sole();
+            $this->assertSame('draft', $copy->status);
+            $this->assertNotSame($record->sku, $copy->sku);
+            $this->assertSame($record->images()->sole()->image_path, $copy->images()->sole()->image_path);
+            $this->assertNotSame($record->variants()->sole()->sku, $copy->variants()->sole()->sku);
+            $this->getJson('/api/storefront')->assertJsonMissing(['slug' => $copy->slug]);
+            $this->delete('/admin/products/'.$copy->id)->assertRedirect('/admin/products');
+            $this->post('/admin/categories/'.$category->id.'/duplicate')->assertRedirect();
+            $categoryCopy = Category::query()->where('slug', 'like', $categorySlug.'-copy-%')->sole();
+            $this->assertSame('draft', $categoryCopy->status);
+            $this->assertSame(0, $categoryCopy->products()->count());
+            $this->get('/admin/products/'.$record->id.'/delete')->assertOk()->assertSee($record->name);
+            $this->delete('/admin/categories/'.$category->id)->assertSessionHasErrors('category');
+            $this->delete('/admin/products/'.$record->id)->assertRedirect('/admin/products');
+            $this->assertSoftDeleted($record);
+            $this->get('/admin/products/edit/'.$record->id)->assertNotFound();
+            $this->getJson('/api/storefront')->assertJsonMissing(['slug' => $productSlug]);
+            $this->delete('/admin/categories/'.$category->id)->assertRedirect('/admin/categories');
+            $this->assertSoftDeleted($category);
+            $this->getJson('/api/storefront')->assertJsonMissing(['slug' => $categorySlug]);
         } finally {
             DB::rollBack();
         }

@@ -25,8 +25,8 @@ export async function generateMetadata({
   const category = categories.find((item) => item.slug === slug);
 
   return {
-    title: category?.name ?? "Category",
-    description: category?.description,
+    title: category?.metaTitle ?? category?.name ?? "Category",
+    description: category?.metaDescription ?? category?.description,
   };
 }
 
@@ -62,32 +62,32 @@ async function CategoryContent({
   const subcategories = categories.filter((item) => item.parentSlug === category.slug);
 
   return (
-    <div className="category-page container-shell">
-      <nav className="content-page-topline" aria-label={formatStorefrontCopy(copy, "category.breadcrumb", "Breadcrumb")}>
-        <Link href="/"><StorefrontText id="category.home" fallback="Home" /></Link><span aria-hidden="true">/</span>
-        <Link href="/shop"><StorefrontText id="category.shop-all" fallback="Shop all" /></Link><span aria-hidden="true">/</span>
-        {parent && <><Link href={`/categories/${parent.slug}`}>{parent.name}</Link><span aria-hidden="true">/</span></>}
-        <span aria-current="page">{category.name}</span>
-      </nav>
+    <div className="category-page">
       <header className={`category-hero category-hero-${category.tint}`}>
-        <ImageCanvas src={category.image} alt="" className="category-hero-image" />
-        <div className="category-hero-copy">
-          <span className="eyebrow"><StorefrontText id="category.the-category-edit" fallback="The category edit ·" />{" "}{category.mark}</span>
-          <h1>{category.name}</h1>
-          <p>{category.description}<StorefrontText id="category.find-your-next-little-favourite-always-under" fallback=". Find your next little favourite, always under £20." /></p>
+        <ImageCanvas src={category.image} alt="" className="category-hero-image" sizes="100vw" />
+        <div className="category-hero-inner container-shell">
+          <nav className="content-page-topline" aria-label={formatStorefrontCopy(copy, "category.breadcrumb", "Breadcrumb")}>
+            <Link href="/"><StorefrontText id="category.home" fallback="Home" /></Link><span aria-hidden="true">/</span>
+            <Link href="/shop"><StorefrontText id="category.shop-all" fallback="Shop all" /></Link><span aria-hidden="true">/</span>
+            {parent && <><Link href={`/categories/${parent.slug}`}>{parent.name}</Link><span aria-hidden="true">/</span></>}
+            <span aria-current="page">{category.name}</span>
+          </nav>
+          <div className="category-hero-copy">
+            <span className="eyebrow"><StorefrontText id="category.the-category-edit" fallback="The category edit ·" />{" "}{category.mark}</span>
+            <h1>{category.name}</h1>
+            <p>{category.description}<StorefrontText id="category.find-your-next-little-favourite-always-under" fallback=". Find your next little favourite, always under £20." /></p>
+          </div>
+          <span className="category-hero-price"><StorefrontText id="category.everything" fallback="everything" /><br /><strong><StorefrontText id="category.under-20" fallback="under £20" /></strong></span>
         </div>
-        <span className="category-hero-price"><StorefrontText id="category.everything" fallback="everything" /><br /><strong><StorefrontText id="category.under-20" fallback="under £20" /></strong></span>
       </header>
       {subcategories.length > 0 && (
-        <nav className="cms-subcategories catalogue-category-links" aria-label={formatStorefrontCopy(copy, "category.subcategories-label", "Subcategories")}>
+        <nav className="cms-subcategories catalogue-category-links container-shell" aria-label={formatStorefrontCopy(copy, "category.subcategories-label", "Subcategories")}>
           {subcategories.map((item) => <Link className="text-link" key={item.slug} href={`/categories/${item.slug}`}>{item.name}</Link>)}
         </nav>
       )}
-      <div className="category-products-heading">
-        <div><span className="eyebrow"><StorefrontText id="category.good-things-live-here" fallback="Good things live here" /></span><h2><StorefrontText id="category.shop" fallback="Shop" />{" "}{category.name}</h2></div>
-      </div>
-      <ShopListing key={slug} categories={branch} products={categoryProducts} collection />
-      <div className="category-back-link"><Link href="/shop"><StorefrontText id="category.explore-all-finds" fallback="Explore all finds" />{" "}<span aria-hidden="true">↗</span></Link></div>
+      <ShopListing key={slug} categories={branch} products={categoryProducts} collection
+        heading={<><StorefrontText id="category.shop" fallback="Shop" />{" "}{category.name}</>} />
+      <div className="category-back-link container-shell"><Link href="/shop"><StorefrontText id="category.explore-all-finds" fallback="Explore all finds" />{" "}<span aria-hidden="true">↗</span></Link></div>
     </div>
   );
 }
